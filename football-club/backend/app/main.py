@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from app.db import init_db
 from app import models
-from app.api import members
+from app.api import members, clubs, memberships
 
 # This 'lifespan' function runs when the server starts
 # It ensures your database tables are created automatically
@@ -19,6 +19,10 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan
 )
+
+app.include_router(members.router, prefix="/members", tags=["members"])
+app.include_router(clubs.router, prefix="/clubs", tags=["clubs"])
+app.include_router(memberships.router, prefix="/memberships", tags=["memberships"])
 
 @app.get("/")
 def read_root():

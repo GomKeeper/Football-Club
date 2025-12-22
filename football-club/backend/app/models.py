@@ -114,3 +114,20 @@ class NotificationLog(SQLModel, table=True):
     type: NotificationType
     scheduled_at: datetime
     sent_at: Optional[datetime] = None
+
+# --- Update Schemas (For PATCH requests) ---
+
+class ClubUpdate(SQLModel):
+    name: Optional[str] = None
+    emblem_url: Optional[str] = None
+
+class MemberUpdate(SQLModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    avatar_url: Optional[str] = None
+    roles: Optional[List[str]] = None
+    club_id: Optional[int] = None
+
+class MembershipUpdate(SQLModel):
+    status: Optional[MembershipStatus] = None
+    year: Optional[int] = None
