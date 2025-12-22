@@ -1,0 +1,16 @@
+# --- Node / Next.js ---
+node_modules/
+.next/
+frontend/.env.local
+frontend/.env
+
+# --- Python / uv ---
+__pycache__/
+*.pyc
+.venv/
+backend/.env
+
+# --- IDE ---
+.vscode/
+.idea/
+.DS_Store
