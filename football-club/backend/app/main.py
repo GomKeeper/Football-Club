@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from app.db import init_db
 from app import models
+from app.api import members
 
 # This 'lifespan' function runs when the server starts
 # It ensures your database tables are created automatically
