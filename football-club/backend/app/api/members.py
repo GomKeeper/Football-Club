@@ -1,39 +1,43 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from fastapi import APIRouter, Depends
 from typing import List
-
-from app.db import get_session
-from app.models import Member
+from app.models import Member, MemberUpdate
+from app.services.member_service import MemberService
+from app.core.dependencies import get_member_service
 
 router = APIRouter()
 
 @router.post("/", response_model=Member)
-def create_member(member: Member, session: Session = Depends(get_session)):
-    """
-    Register a new member. 
-    In the future, this will be called automatically after Kakao Login.
-    """
-    # 1. Check if kakao_id already exists
-    existing_member = session.exec(select(Member).where(Member.kakao_id == member.kakao_id)).first()
-    if existing_member:
-        raise HTTPException(status_code=400, detail="Member with this Kakao ID already exists")
-
-    # 2. Save to DB
-    session.add(member)
-    session.commit()
-    session.refresh(member)
-    return member
+def create_member(
+    member: Member, 
+    service: MemberService = Depends(get_member_service) # <--- Injection!
+):
+    return service.register_member(member)
 
 @router.get("/", response_model=List[Member])
-def read_members(session: Session = Depends(get_session)):
-    """List all members in the database"""
-    members = session.exec(select(Member)).all()
-    return members
+def read_members(
+    service: MemberService = Depends(get_member_service)
+):
+    return service.list_members()
 
 @router.get("/{member_id}", response_model=Member)
-def read_member(member_id: int, session: Session = Depends(get_session)):
-    """Get a specific member by ID"""
-    member = session.get(Member, member_id)
-    if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
-    return member
+def read_member(
+    member_id: int, 
+    service: MemberService = Depends(get_member_service)
+):
+    return service.get_member(member_id)
+
+@router.patch("/{member_id}", response_model=Member)
+def update_member(
+    member_id: int, 
+    member_update: MemberUpdate, 
+    service: MemberService = Depends(get_member_service)
+):
+    return service.update_member(member_id, member_update)
+
+@router.delete("/{member_id}")
+def delete_member(
+    member_id: int, 
+    service: MemberService = Depends(get_member_service)
+):
+    service.remove_member(member_id)
+    return {"ok": True}
