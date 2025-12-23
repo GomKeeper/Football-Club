@@ -11,7 +11,7 @@ async def lifespan(app: FastAPI):
     print("🚀 Server starting... Connecting to Database...")
     init_db()  # Creates tables defined in models.py (we will create models next)
     yield
-    print("🛑 Server shutting down...")
+    print("🛑 Server shutting down..." )
 
 # This is the 'app' object uvicorn is looking for!
 app = FastAPI(
