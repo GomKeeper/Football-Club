@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
+from fastapi.middleware.cors import CORSMiddleware # <--- 1. Import this
+
 from app.db import init_db
 from app import models
 from app.api import members, clubs, memberships
@@ -18,6 +20,20 @@ app = FastAPI(
     title="Football Club API",
     version="0.1.0",
     lifespan=lifespan
+)
+
+origins = [
+    "http://localhost:3000",                  # Local Frontend
+    "https://football-club-frontend.vercel.app", # Vercel Frontend (Replace with yours later)
+    "*"                                       # Allow all (easiest for testing, secure later)
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow POST, GET, OPTIONS, etc.
+    allow_headers=["*"],
 )
 
 app.include_router(members.router, prefix="/members", tags=["members"])
