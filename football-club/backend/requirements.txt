@@ -4,4 +4,3 @@ sqlmodel==0.0.27
 python-dotenv==1.2.1
 psycopg2-binary==2.9.11
 pydantic==2.10.0
-pydantic-core==2.20.0
