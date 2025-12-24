@@ -1,10 +1,28 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from fastapi.middleware.cors import CORSMiddleware # <--- 1. Import this
+from fastapi.middleware.cors import CORSMiddleware
+from importlib.metadata import version, PackageNotFoundError
+import tomllib
+from pathlib import Path
 
 from app.db import init_db
-from app import models
 from app.api import members, clubs, memberships
+
+def get_app_version():
+    try:
+        # Try to get installed package version
+        return version("backend")
+    except PackageNotFoundError:
+        # Fallback: Read pyproject.toml directly
+        try:
+            pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
+            with open(pyproject_path, "rb") as f:
+                return tomllib.load(f)["project"]["version"]
+        except Exception as e:
+            print(f"Warning: Could not read version: {e}")
+            return "0.1.0" # Default fallback
+
+app_version = get_app_version()
 
 # This 'lifespan' function runs when the server starts
 # It ensures your database tables are created automatically
@@ -18,7 +36,7 @@ async def lifespan(app: FastAPI):
 # This is the 'app' object uvicorn is looking for!
 app = FastAPI(
     title="Football Club API",
-    version="0.1.0",
+    version=app_version,
     lifespan=lifespan
 )
 
@@ -36,10 +54,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def read_root():
+    return {
+        "message": "Hello! The Football Club API is running.",
+        "version": app_version,
+        "docs_url": "/docs",
+    }
+
 app.include_router(members.router, prefix="/members", tags=["members"])
 app.include_router(clubs.router, prefix="/clubs", tags=["clubs"])
 app.include_router(memberships.router, prefix="/memberships", tags=["memberships"])
-
-@app.get("/")
-def read_root():
-    return {"message": "Hello! The Football Club API is running."}
