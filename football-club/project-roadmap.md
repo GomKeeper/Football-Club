@@ -3,24 +3,32 @@
 ## 📌 Phase 0: Infrastructure & Architecture (✅ COMPLETED)
 - [x] **Monorepo Setup**: Initialize `backend/` (FastAPI) and `frontend/` (Next.js) directories.
 - [x] **Database Setup**: Create Supabase project and configure PostgreSQL.
-- [x] **Backend Architecture**: Implement 3-Layer Design (Repository - Service - API).
+- [x] **Backend Architecture**:
+    - [x] Implement 3-Layer Design (Repository - Service - API).
+    - [x] **API Versioning**: Dynamic version reading from `pyproject.toml` (via `tomllib`).
+    - [x] **Testing**: Setup `pytest` with in-memory SQLite for unit tests.
+    - [x] **CORS**: Configure middleware for cross-origin requests.
 - [x] **Dependency Management**: Setup `uv` for Python and `npm` for Node.js.
 - [x] **Cloud Deployment (Hybrid)**:
     - [x] **Backend**: Deploy FastAPI to **Railway** (Persistent Container).
     - [x] **Frontend**: Deploy Next.js to **Vercel**.
     - [x] **Networking**: Connect Frontend (Vercel) to Backend (Railway) via ENV variables.
 
-## 👤 Phase 1: Authentication & Member Management (🚧 IN PROGRESS)
+## 👤 Phase 1: Authentication & Member Management (✅ COMPLETED)
 - [x] **Kakao Developers Setup**: Obtain API Keys and configure Redirect URIs.
 - [x] **Supabase Auth**: Enable Kakao Login provider in Supabase Dashboard.
 - [x] **Backend Member API**:
-    - [x] Create `Member` Model & Table.
+    - [x] Create `Member` Model (with `MemberStatus` Enum: PENDING, ACTIVE, REJECTED).
     - [x] Implement CRUD Endpoints (`GET`, `POST`, `PATCH`, `DELETE`).
-    - [x] **Service Layer**: Implement "Get by Kakao ID" logic.
-- [ ] **Frontend Auth Integration**:
-    - [ ] Implement "Log in with Kakao" button using Supabase Auth Helper.
-    - [ ] Create `AuthContext` to manage user session state.
-    - [ ] **Auto-Registration**: Call Backend `POST /members` API upon first login to sync data.
+    - [x] **Service Layer**: Implement "Get by Kakao ID" & "Auto-set Pending Status" logic.
+- [x] **Frontend Auth Integration**:
+    - [x] **Login Flow**: Implement "Log in with Kakao" button (Korean UI).
+    - [x] **Auth Context**: Create `AuthProvider` to manage user session & backend sync.
+    - [x] **Scope Handling**: Fix `KOE205` error by forcing `queryParams` for specific scopes.
+- [x] **Approval Workflow (Gatekeeper)**:
+    - [x] **Waiting Room**: Create `/pending` page for unapproved users.
+    - [x] **Route Protection**: Redirect `pending` users away from Dashboard.
+    - [x] **Dashboard**: Create basic `/dashboard` for active members.
 
 ## 🏢 Phase 2: Club & Membership Administration (✅ COMPLETED)
 - [x] **Club Domain**:
@@ -38,7 +46,7 @@
 - [ ] **Match Management**:
     - [ ] Create `Match` Model (date, location, status).
     - [ ] Implement `POST /matches` (Generate a match from a template).
-    - [ ] **Scheduling Logic**: Auto-calculate `polling_start`, `soft_deadline`, and `hard_deadline` based on match time.
+    - [ ] **Scheduling Logic**: Auto-calculate `polling_start`, `soft_deadline`, and `hard_deadline`.
 - [ ] **Participation System**:
     - [ ] Create `Participant` Model (Member + Match + Status).
     - [ ] Implement `POST /matches/{id}/join` and `POST /matches/{id}/leave`.
@@ -64,6 +72,8 @@
 ---
 
 ## 🛠️ Technical Debt & Polish
-- [ ] **Validation**: Add Pydantic validators for detailed error messages.
+- [x] **Versioning**: Implement `get_app_version()` fallback logic.
+- [x] **Unit Testing**: Create `tests/test_models.py` to safeguard Enum values.
+- [ ] **Validation**: Add more complex Pydantic validators for date logic.
 - [ ] **Security**: Secure Backend API with API Key (for Cron) and JWT Verification (for User actions).
 - [ ] **UI/UX**: Polish the "Status Toggle" button (Join/Absent) for mobile friendliness.
