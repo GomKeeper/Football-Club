@@ -1,5 +1,5 @@
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlmodel import SQLModel, Field, Relationship
 from enum import Enum
 from sqlalchemy import Column, JSON
@@ -67,7 +67,9 @@ class Membership(SQLModel, table=True):
     club_id: int = Field(foreign_key="club.id")
     year: int = Field(index=True)
     status: MembershipStatus = Field(default=MembershipStatus.PENDING)
-    
+    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    ended_at: Optional[datetime] = Field(default=None)
+
     member: Member = Relationship(back_populates="memberships")
     club: Club = Relationship(back_populates="memberships")
 
@@ -121,6 +123,15 @@ class NotificationLog(SQLModel, table=True):
     scheduled_at: datetime
     sent_at: Optional[datetime] = None
 
+# --- Create Schemas (For POST requests) ---
+class MembershipCreate(SQLModel):
+    member_id: int
+    club_id: int
+    year: int
+    status: str = "active"
+    started_at: datetime
+    ended_at: Optional[datetime] = None
+
 # --- Update Schemas (For PATCH requests) ---
 
 class ClubUpdate(SQLModel):
@@ -138,3 +149,5 @@ class MemberUpdate(SQLModel):
 class MembershipUpdate(SQLModel):
     status: Optional[MembershipStatus] = None
     year: Optional[int] = None
+    started_at: Optional[datetime] = None
+    ended_at: Optional[datetime] = None
