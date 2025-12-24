@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from app.models import Member, MemberUpdate
+from app.models import Member, MemberUpdate, MemberStatus
 from app.repositories.member_repository import MemberRepository
 
 class MemberService:
@@ -8,9 +8,11 @@ class MemberService:
 
     def register_member(self, member_data: Member) -> Member:
         # Business Logic: Check for duplicates
-        if self.repository.get_by_kakao_id(member_data.kakao_id):
-            raise HTTPException(status_code=400, detail="Member with this Kakao ID already exists")
-        
+        existing_member = self.repository.get_by_kakao_id(member_data.kakao_id)
+        if existing_member:
+            return existing_member
+        member_data.status = MemberStatus.PENDING
+
         return self.repository.create(member_data)
 
     def get_member(self, member_id: int) -> Member:

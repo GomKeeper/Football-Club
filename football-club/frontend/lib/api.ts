@@ -5,7 +5,8 @@ export interface Member {
     name: string;
     avatar_url?: string;
     roles: string[];
-  }
+    status: 'PENDING' | 'ACTIVE' | 'REJECTED'; // Changed to Uppercase to match backend
+}
   
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   
@@ -25,7 +26,8 @@ export interface Member {
         avatar_url: user_metadata.avatar_url || "",
         // 👇 Update this line to handle missing emails gracefully
         email: user_metadata.email || `no-email-${kakaoId}@placeholder.com`, 
-        roles: ["viewer"]
+        roles: ["VIEWER"],
+        status: 'PENDING'
       };
   
     try {

@@ -4,14 +4,19 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
-  const { signInWithKakao, user, loading } = useAuth()
+  const { signInWithKakao, user, member, loading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading && user) {
-      router.push('/dashboard') 
+    if (!loading && user && member) {
+      // 🚦 THE TRAFFIC COP LOGIC
+      if (member.status === 'ACTIVE') {
+        router.push('/dashboard') 
+      } else {
+        router.push('/pending')
+      }
     }
-  }, [user, loading, router])
+  }, [user, member, loading, router])
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-24 bg-gray-100">

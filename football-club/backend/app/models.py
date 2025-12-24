@@ -6,26 +6,31 @@ from sqlalchemy import Column, JSON
 
 # --- Enums (Choices) ---
 class Role(str, Enum):
-    VIEWER = "viewer"
-    EDITOR = "editor"
-    ADMIN = "admin"
-    ANNOUNCER = "announcer"
+    VIEWER = "VIEWER"
+    EDITOR = "EDITOR"
+    ADMIN = "ADMIN"
+    ANNOUNCER = "ANNOUNCER"
 
 class ParticipationStatus(str, Enum):
-    JOIN = "join"
-    ABSENT = "absent"
-    TBD = "tbd"
-    NONE = "none"
+    JOIN = "JOIN"
+    ABSENT = "ABSENT"
+    TBD = "TBD"
+    NONE = "NONE"
 
 class NotificationType(str, Enum):
-    INITIAL_POLLING = "initial_polling"
-    SOFT_DEADLINE = "soft_deadline"
-    HARD_DEADLINE = "hard_deadline"
+    INITIAL_POLLING = "INITIAL_POLLING"
+    SOFT_DEADLINE = "SOFT_DEADLINE"
+    HARD_DEADLINE = "HARD_DEADLINE"
+
+class MemberStatus(str, Enum):
+    PENDING = "PENDING"   # Waiting for approval
+    ACTIVE = "ACTIVE"     # Approved Member
+    REJECTED = "REJECTED" # Banned/Denied
 
 class MembershipStatus(str, Enum):
-    PENDING = "pending"
-    ACTIVE = "active"
-    SUSPENDED = "suspended"
+    PENDING = "PENDING"
+    ACTIVE = "ACTIVE"
+    SUSPENDED = "SUSPENDED"
 
 # --- Tables ---
 
@@ -43,6 +48,7 @@ class Member(SQLModel, table=True):
     club_id: Optional[int] = Field(default=None, foreign_key="club.id")
     kakao_id: str = Field(index=True, unique=True) # Critical for Auth
     name: str
+    status: MemberStatus = Field(default=MemberStatus.PENDING)
     email: Optional[str] = None
     phone: Optional[str] = None
     
@@ -124,9 +130,10 @@ class ClubUpdate(SQLModel):
 class MemberUpdate(SQLModel):
     name: Optional[str] = None
     email: Optional[str] = None
-    avatar_url: Optional[str] = None
+    phone: Optional[str] = None
     roles: Optional[List[str]] = None
     club_id: Optional[int] = None
+    status: Optional[MemberStatus] = None
 
 class MembershipUpdate(SQLModel):
     status: Optional[MembershipStatus] = None
