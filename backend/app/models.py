@@ -1,5 +1,5 @@
 from typing import Optional, List
-from datetime import datetime, timezone
+from datetime import datetime, time, timezone
 from sqlmodel import SQLModel, Field, Relationship
 from enum import Enum
 from sqlalchemy import Column, JSON
@@ -42,6 +42,7 @@ class Club(SQLModel, table=True):
     # Relationships
     members: List["Member"] = Relationship(back_populates="club")
     memberships: List["Membership"] = Relationship(back_populates="club")
+    match_templates: List["MatchTemplate"] = Relationship(back_populates="club")    
 
 class Member(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -75,14 +76,28 @@ class Membership(SQLModel, table=True):
 
 class MatchTemplate(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    title: str
-    location: str
-    duration_minutes: int = 90
+    club_id: int = Field(foreign_key="club.id")
     
-    recurrence_cron: str # e.g. "0 10 * * 1"
-    polling_lead_days: int = 7
-    soft_deadline_lead_days: int = 3
-    hard_deadline_lead_days: int = 1
+    name: str = Field(index=True) # e.g., "Sunday Regular Match"
+    description: Optional[str] = None
+    
+    # 🗓 Schedule Defaults (UTC)
+    day_of_week: Optional[int] = None # 0=Monday, 6=Sunday (ISO format)
+    start_time: time # Stored in UTC! (e.g., 11:00 for 20:00 KST)
+    duration_minutes: int = Field(default=120) # 2 hours
+    
+    location: str
+    min_participants: int = Field(default=10)
+    max_participants: int = Field(default=22)
+    
+    # 🤖 Automation Settings (Deadlines relative to Match Start)
+    # e.g., if match is Fri, polling_start_days_before=5 means poll starts Sun
+    polling_start_hours_before: int = Field(default=144) # Default: 6 days (144h)
+    soft_deadline_hours_before: int = Field(default=48) # 2 days before (48h)
+    hard_deadline_hours_before: int = Field(default=24) # 1 day before (24h)
+
+    # Relationships
+    club: Optional[Club] = Relationship(back_populates="match_templates")
 
 class Match(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -132,6 +147,20 @@ class MembershipCreate(SQLModel):
     started_at: datetime
     ended_at: Optional[datetime] = None
 
+class MatchTemplateCreate(SQLModel):
+    club_id: int
+    name: str
+    description: Optional[str] = None
+    day_of_week: Optional[int] = None
+    start_time: time 
+    duration_minutes: int = 240
+    location: str
+    min_participants: int = 1
+    max_participants: int = 100
+    polling_start_hours_before: int = 144
+    soft_deadline_hours_before: int = 48
+    hard_deadline_hours_before: int = 24
+
 # --- Update Schemas (For PATCH requests) ---
 
 class ClubUpdate(SQLModel):
@@ -151,3 +180,14 @@ class MembershipUpdate(SQLModel):
     year: Optional[int] = None
     started_at: Optional[datetime] = None
     ended_at: Optional[datetime] = None
+
+class MatchTemplateUpdate(SQLModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    day_of_week: Optional[int] = None
+    start_time: Optional[time] = None
+    duration_minutes: Optional[int] = None
+    location: Optional[str] = None
+    polling_start_hours_before: Optional[int] = None
+    soft_deadline_hours_before: Optional[int] = None
+    hard_deadline_hours_before: Optional[int] = None
