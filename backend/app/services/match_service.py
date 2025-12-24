@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from fastapi import HTTPException
+from typing import List
 
 from app.models import Match, MatchCreateFromTemplate, MatchStatus
 from app.repositories.match_template_repository import MatchTemplateRepository
@@ -48,3 +49,6 @@ class MatchService:
         )
 
         return self.match_repo.create(new_match)
+
+    def get_upcoming_matches(self, club_id: int) -> List[Match]:
+        return self.match_repo.get_upcoming_matches(club_id)

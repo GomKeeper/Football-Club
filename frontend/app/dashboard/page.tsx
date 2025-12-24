@@ -1,11 +1,14 @@
 'use client'
 import { useAuth } from '@/components/AuthProvider'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { getUpcomingMatches, Match } from '@/lib/api'
+import MatchCard from '@/components/MatchCard'
 
 export default function DashboardPage() {
   const { user, member, loading, signOut } = useAuth()
   const router = useRouter()
+  const [matches, setMatches] = useState<Match[]>([]) // State for matches
 
   // 🛡️ Route Protection: Kick out unauthorized users
   useEffect(() => {
@@ -17,6 +20,15 @@ export default function DashboardPage() {
       }
     }
   }, [user, member, loading, router])
+
+  useEffect(() => {
+    if (!loading && member) {
+      //TODO: Fetch Club 1 Matches (Hardcoded for now)
+      getUpcomingMatches(1)
+        .then(setMatches)
+        .catch(console.error)
+    }
+  }, [loading, member])
 
   if (loading || !member) {
     return (
@@ -63,18 +75,27 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 2. Upcoming Match (Placeholder) */}
+        {/* 2. Upcoming Match Section */}
         <div className="space-y-3">
           <h3 className="text-lg font-bold text-gray-800 px-1">📅 다가오는 매치</h3>
           
-          {/* Empty State Card */}
-          <div className="bg-white p-8 rounded-2xl shadow-sm text-center border border-dashed border-gray-300">
-            <div className="text-4xl mb-3">⚽️</div>
-            <p className="text-gray-600 font-medium">예정된 매치가 없습니다</p>
-            <p className="text-gray-400 text-sm mt-1">
-              새로운 일정이 등록되면 알림을 드릴게요!
-            </p>
-          </div>
+          {matches.length === 0 ? (
+            // Empty State
+            <div className="bg-white p-8 rounded-2xl shadow-sm text-center border border-dashed border-gray-300">
+              <div className="text-4xl mb-3">⚽️</div>
+              <p className="text-gray-600 font-medium">예정된 매치가 없습니다</p>
+              <p className="text-gray-400 text-sm mt-1">
+                새로운 일정이 등록되면 알림을 드릴게요!
+              </p>
+            </div>
+          ) : (
+            // Matches List
+            <div className="grid gap-4">
+              {matches.map(match => (
+                <MatchCard key={match.id} match={match} />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* 3. Quick Actions */}

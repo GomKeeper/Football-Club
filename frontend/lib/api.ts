@@ -128,3 +128,16 @@ export interface Match {
   
     return response.json() as Promise<Match>;
   }
+
+  export async function getUpcomingMatches(clubId: number) {
+    const response = await fetch(`${API_URL}/matches/club/${clubId}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+  
+    if (!response.ok) {
+      throw new Error("Failed to fetch matches");
+    }
+  
+    return response.json() as Promise<Match[]>;
+  }
