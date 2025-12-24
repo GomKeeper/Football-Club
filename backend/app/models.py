@@ -1,5 +1,5 @@
 from typing import Optional, List
-from datetime import datetime, time, timezone
+from datetime import datetime, date, time, timezone
 from sqlmodel import SQLModel, Field, Relationship
 from enum import Enum
 from sqlalchemy import Column, JSON
@@ -32,6 +32,12 @@ class MembershipStatus(str, Enum):
     ACTIVE = "ACTIVE"
     SUSPENDED = "SUSPENDED"
 
+class MatchStatus(str, Enum):
+    RECRUITING = "RECRUITING"
+    CLOSED = "CLOSED"
+    CANCELLED = "CANCELLED"
+    FINISHED = "FINISHED"
+
 # --- Tables ---
 
 class Club(SQLModel, table=True):
@@ -43,6 +49,7 @@ class Club(SQLModel, table=True):
     members: List["Member"] = Relationship(back_populates="club")
     memberships: List["Membership"] = Relationship(back_populates="club")
     match_templates: List["MatchTemplate"] = Relationship(back_populates="club")    
+    matches: List["Match"] = Relationship(back_populates="club")
 
 class Member(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -59,7 +66,6 @@ class Member(SQLModel, table=True):
     club: Optional[Club] = Relationship(back_populates="members")
     memberships: List["Membership"] = Relationship(back_populates="member")
     participations: List["Participant"] = Relationship(back_populates="member")
-    managed_matches: List["Match"] = Relationship(back_populates="manager")
 
 class Membership(SQLModel, table=True):
     """Annual membership status (e.g. 2025 Member)"""
@@ -101,21 +107,30 @@ class MatchTemplate(SQLModel, table=True):
 
 class Match(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    template_id: Optional[int] = Field(default=None, foreign_key="matchtemplate.id")
-    manager_id: Optional[int] = Field(default=None, foreign_key="member.id")
+    club_id: int = Field(foreign_key="club.id")
     
-    title: str
+    # Snapshot Fields (Copied from Template)
+    name: str 
+    description: Optional[str] = None
     location: str
-    starts_at: datetime
-    ends_at: datetime
     
-    # Notification Schedule
-    start_polling_at: datetime
-    soft_deadline: datetime
-    hard_deadline: datetime
+    # ⏰ The Concrete Schedule (UTC)
+    start_time: datetime 
+    end_time: datetime
     
-    participants: List["Participant"] = Relationship(back_populates="match")
-    manager: Optional[Member] = Relationship(back_populates="managed_matches")
+    # 🤖 Calculated Deadlines (UTC)
+    polling_start_at: datetime
+    soft_deadline_at: datetime
+    hard_deadline_at: datetime
+    
+    # Participants Limits
+    min_participants: int
+    max_participants: int
+    
+    status: MatchStatus = Field(default=MatchStatus.RECRUITING)
+    
+    # Relationships
+    club: Optional["Club"] = Relationship(back_populates="matches")
 
 class Participant(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -126,7 +141,7 @@ class Participant(SQLModel, table=True):
     additional_message: Optional[str] = None
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    match: Match = Relationship(back_populates="participants")
+    # match: Match = Relationship(back_populates="participants")
     member: Member = Relationship(back_populates="participations")
 
 class NotificationLog(SQLModel, table=True):
@@ -160,6 +175,10 @@ class MatchTemplateCreate(SQLModel):
     polling_start_hours_before: int = 144
     soft_deadline_hours_before: int = 48
     hard_deadline_hours_before: int = 24
+
+class MatchCreateFromTemplate(SQLModel):
+    template_id: int
+    match_date: date # e.g., "2025-02-11"
 
 # --- Update Schemas (For PATCH requests) ---
 

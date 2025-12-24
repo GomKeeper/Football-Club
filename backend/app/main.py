@@ -6,7 +6,7 @@ import tomllib
 from pathlib import Path
 
 from app.db import init_db
-from app.api import members, clubs, memberships, match_templates
+from app.api import members, clubs, memberships, match_templates, matches
 
 def get_app_version():
     try:
@@ -66,3 +66,4 @@ app.include_router(members.router, prefix="/members", tags=["members"])
 app.include_router(clubs.router, prefix="/clubs", tags=["clubs"])
 app.include_router(memberships.router, prefix="/memberships", tags=["memberships"])
 app.include_router(match_templates.router, prefix="/match-templates", tags=["match-templates"])
+app.include_router(matches.router, prefix="/matches", tags=["matches"])

@@ -9,7 +9,7 @@ router = APIRouter()
 @router.post("/", response_model=Member)
 def create_member(
     member: Member, 
-    service: MemberService = Depends(get_member_service) # <--- Injection!
+    service: MemberService = Depends(get_member_service)
 ):
     return service.register_member(member)
 
