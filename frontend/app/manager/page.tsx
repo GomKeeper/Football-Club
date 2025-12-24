@@ -4,11 +4,14 @@ import { getMatchTemplates, type MatchTemplate } from '@/lib/api'
 import { formatSchedule } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import CreateMatchModal from '@/components/CreateMatchModal'
 
 export default function ManagerPage() {
   const { member, loading } = useAuth()
   const router = useRouter()
   const [templates, setTemplates] = useState<MatchTemplate[]>([])
+  const [selectedTemplate, setSelectedTemplate] = useState<MatchTemplate | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)  
 
   // 1. Fetch Data
   useEffect(() => {
@@ -28,6 +31,11 @@ export default function ManagerPage() {
   }, [loading, member, router])
 
   if (loading) return <div className="p-6">로딩 중...</div>
+
+  const handleOpenModal = (template: MatchTemplate) => {
+    setSelectedTemplate(template)
+    setIsModalOpen(true)
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -84,12 +92,23 @@ export default function ManagerPage() {
                   <button className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg text-sm font-medium hover:bg-gray-200">
                     수정
                   </button>
-                  <button className="flex-1 bg-black text-white py-2 rounded-lg text-sm font-medium hover:bg-gray-800">
-                    ⚡️ 매치 생성
+                  <button onClick={() => handleOpenModal(t)}
+                          className="flex-1 bg-black text-white py-2 rounded-lg text-sm font-medium hover:bg-gray-800">
+                    ⚡️ 경기 생성
                   </button>
                 </div>
               </div>
             ))
+          )}
+
+          {selectedTemplate && (
+            <CreateMatchModal 
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              templateId={selectedTemplate.id}
+              templateName={selectedTemplate.name}
+              dayOfWeek={selectedTemplate.day_of_week}
+            />
           )}
         </div>
 

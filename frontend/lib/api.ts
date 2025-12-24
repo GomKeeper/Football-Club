@@ -24,6 +24,21 @@ export interface MatchTemplate {
   max_participants: number;
 }
 
+export interface Match {
+  id: number;
+  name: string;
+  start_time: string; // ISO String (UTC)
+  status: 'RECRUITING' | 'CLOSED' | 'CANCELLED' | 'FINISHED';
+  description?: string;
+  location: string;
+  min_participants: number;
+  max_participants: number;
+  polling_start_at: string; // ISO String (UTC)
+  soft_deadline_at: string; // ISO String (UTC)
+  hard_deadline_at: string; // ISO String (UTC)
+  club_id: number;
+}
+
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   
   export async function syncUserWithBackend(supabaseUser: any) {
@@ -92,4 +107,24 @@ export interface MatchTemplate {
     }
   
     return response.json() as Promise<MatchTemplate[]>;
+  }
+
+  export async function generateMatch(templateId: number, matchDate: string) {
+    // matchDate format should be "YYYY-MM-DD"
+    const response = await fetch(`${API_URL}/matches/generate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        template_id: templateId,
+        match_date: matchDate,
+      }),
+    });
+  
+    if (!response.ok) {
+      throw new Error("Failed to generate the match");
+    }
+  
+    return response.json() as Promise<Match>;
   }
