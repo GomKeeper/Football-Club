@@ -89,6 +89,18 @@ export default function DashboardPage() {
           </button>
         </div>
 
+        {/* Manager Section */}
+        {(member.roles.includes('ADMIN') || member.roles.includes('MANAGER')) && (
+        <div className="col-span-2">
+          <button 
+            onClick={() => router.push('/manager')}
+            className="bg-black text-white p-4 rounded-xl shadow-sm text-center active:scale-95 transition-transform col-span-2"
+          >
+            <span className="block text-xl mb-1">🛡️</span>
+            <span className="text-sm font-medium">관리자 모드 접속</span>
+          </button>
+        </div>
+        )}
       </main>
     </div>
   )

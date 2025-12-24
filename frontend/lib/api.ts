@@ -7,7 +7,23 @@ export interface Member {
     roles: string[];
     status: 'PENDING' | 'ACTIVE' | 'REJECTED'; // Changed to Uppercase to match backend
 }
-  
+
+export interface MatchTemplate {
+  id: number;
+  club_id: number;
+  name: string;
+  description?: string;
+  day_of_week: number; // 0=Mon, 6=Sun
+  start_time: string;  // "11:00:00" (UTC)
+  duration_minutes: number;
+  location: string;
+  polling_start_hours_before: number;
+  soft_deadline_hours_before: number;
+  hard_deadline_hours_before: number;
+  min_participants: number;
+  max_participants: number;
+}
+
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   
   export async function syncUserWithBackend(supabaseUser: any) {
@@ -61,4 +77,19 @@ export interface Member {
       console.error("❌ Sync Error:", error);
       return null;
     }
+  }
+
+  export async function getMatchTemplates(clubId: number) {
+    const response = await fetch(`${API_URL}/match-templates/club/${clubId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  
+    if (!response.ok) {
+      throw new Error("Failed to fetch templates");
+    }
+  
+    return response.json() as Promise<MatchTemplate[]>;
   }
