@@ -2,18 +2,18 @@ from datetime import datetime, timedelta
 from fastapi import HTTPException
 from typing import List
 
-from app.models import Match, MatchCreateFromTemplate, MatchStatus
+from app.models import Match, MatchCreateFromTemplate, MatchCreateManual, MatchStatus
 from app.repositories.match_template_repository import MatchTemplateRepository
 from app.repositories.match_repository import MatchRepository # We will create this next
 
 class MatchService:
-    def __init__(self, match_repo: MatchRepository, template_repo: MatchTemplateRepository):
-        self.match_repo = match_repo
-        self.template_repo = template_repo
+    def __init__(self, match_repository: MatchRepository, template_repository: MatchTemplateRepository):
+        self.match_repository = match_repository
+        self.template_repository = template_repository
 
     def create_match_from_template(self, data: MatchCreateFromTemplate) -> Match:
         # 1. Fetch the Blueprint
-        template = self.template_repo.get_by_id(data.template_id)
+        template = self.template_repository.get_by_id(data.template_id)
         if not template:
             raise HTTPException(status_code=404, detail="Template not found")
 
@@ -48,7 +48,38 @@ class MatchService:
             status=MatchStatus.RECRUITING
         )
 
-        return self.match_repo.create(new_match)
+        return self.match_repository.create(new_match)
+
+    def create_manual_match(self, data: MatchCreateManual) -> Match:
+            # 1. Calculate End Time
+            end_time = data.start_time + timedelta(minutes=data.duration_minutes)
+            
+            # 2. Set Default Deadlines if missing (Safety Net)
+            # Default: Poll starts 7 days before, Soft 2 days, Hard 1 day
+            poll_start = data.polling_start_at or (data.start_time - timedelta(days=6))
+            soft_dead = data.soft_deadline_at or (data.start_time - timedelta(days=2))
+            hard_dead = data.hard_deadline_at or (data.start_time - timedelta(days=1))
+
+            # 3. Create Match Object
+            new_match = Match(
+                club_id=data.club_id,
+                name=data.name,
+                description=data.description,
+                location=data.location,
+                
+                start_time=data.start_time,
+                end_time=end_time,
+                
+                polling_start_at=poll_start,
+                soft_deadline_at=soft_dead,
+                hard_deadline_at=hard_dead,
+                
+                min_participants=data.min_participants,
+                max_participants=data.max_participants,
+                status=MatchStatus.RECRUITING
+            )
+
+            return self.match_repository.create(new_match)
 
     def get_upcoming_matches(self, club_id: int) -> List[Match]:
-        return self.match_repo.get_upcoming_matches(club_id)
+        return self.match_repository.get_upcoming_matches(club_id)

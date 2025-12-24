@@ -180,6 +180,24 @@ class MatchCreateFromTemplate(SQLModel):
     template_id: int
     match_date: date # e.g., "2025-02-11"
 
+class MatchCreateManual(SQLModel):
+    club_id: int
+    name: str
+    description: Optional[str] = None
+    location: str
+    
+    # ⏰ Concrete Schedule (UTC)
+    start_time: datetime
+    duration_minutes: int = 120 # Default 2 hours
+    
+    # 🤖 Deadlines (Can be optional, we can set defaults if missing)
+    polling_start_at: Optional[datetime] = None
+    soft_deadline_at: Optional[datetime] = None
+    hard_deadline_at: Optional[datetime] = None
+    
+    min_participants: int = 10
+    max_participants: int = 22
+
 # --- Update Schemas (For PATCH requests) ---
 
 class ClubUpdate(SQLModel):
