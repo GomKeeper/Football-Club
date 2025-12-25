@@ -1,41 +1,41 @@
-'use client'
-import { useAuth } from '@/components/AuthProvider'
-import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
-import { getUpcomingMatches, Match } from '@/lib/api'
-import MatchCard from '@/components/MatchCard'
+'use client';
+import { useAuth } from '@/components/AuthProvider';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { getUpcomingMatches, Match } from '@/lib/api';
+import MatchCard from '@/components/MatchCard';
+import MatchDetailModal from '@/components/MatchDetailModal';
 
 export default function DashboardPage() {
-  const { user, member, loading, signOut } = useAuth()
-  const router = useRouter()
-  const [matches, setMatches] = useState<Match[]>([]) // State for matches
+  const { user, member, loading, signOut } = useAuth();
+  const router = useRouter();
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
 
   // 🛡️ Route Protection: Kick out unauthorized users
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        router.push('/') // Not logged in -> Go to Login
+        router.push('/'); // Not logged in -> Go to Login
       } else if (member && member.status !== 'ACTIVE') {
-        router.push('/pending') // Not active -> Go to Waiting Room
+        router.push('/pending'); // Not active -> Go to Waiting Room
       }
     }
-  }, [user, member, loading, router])
+  }, [user, member, loading, router]);
 
   useEffect(() => {
     if (!loading && member) {
       //TODO: Fetch Club 1 Matches (Hardcoded for now)
-      getUpcomingMatches(1)
-        .then(setMatches)
-        .catch(console.error)
+      getUpcomingMatches(1).then(setMatches).catch(console.error);
     }
-  }, [loading, member])
+  }, [loading, member]);
 
   if (loading || !member) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50">
         <div className="text-gray-500 animate-pulse">로딩 중...</div>
       </div>
-    )
+    );
   }
 
   return (
@@ -48,7 +48,7 @@ export default function DashboardPage() {
             2025 시즌
           </span>
         </div>
-        <button 
+        <button
           onClick={signOut}
           className="text-sm text-gray-500 hover:text-red-500 transition-colors"
         >
@@ -58,12 +58,11 @@ export default function DashboardPage() {
 
       {/* --- Main Content --- */}
       <main className="max-w-md mx-auto p-6 space-y-6">
-        
         {/* 1. Welcome Card */}
         <div className="bg-white p-6 rounded-2xl shadow-sm flex items-center gap-4">
-          <img 
-            src={member.avatar_url || "https://placehold.co/100"} 
-            alt="Profile" 
+          <img
+            src={member.avatar_url || 'https://placehold.co/100'}
+            alt="Profile"
             className="w-16 h-16 rounded-full border-2 border-gray-100"
           />
           <div>
@@ -78,24 +77,39 @@ export default function DashboardPage() {
         {/* 2. Upcoming Match Section */}
         <div className="space-y-3">
           <h3 className="text-lg font-bold text-gray-800 px-1">📅 다가오는 매치</h3>
-          
+
           {matches.length === 0 ? (
             // Empty State
             <div className="bg-white p-8 rounded-2xl shadow-sm text-center border border-dashed border-gray-300">
               <div className="text-4xl mb-3">⚽️</div>
               <p className="text-gray-600 font-medium">예정된 매치가 없습니다</p>
-              <p className="text-gray-400 text-sm mt-1">
-                새로운 일정이 등록되면 알림을 드릴게요!
-              </p>
+              <p className="text-gray-400 text-sm mt-1">새로운 일정이 등록되면 알림을 드릴게요!</p>
             </div>
           ) : (
             // Matches List
             <div className="grid gap-4">
-              {matches.map(match => (
-                <MatchCard key={match.id} match={match} />
+              {matches.map((match) => (
+                // Wrap MatchCard in a clickable div
+                <div
+                  key={match.id}
+                  onClick={() => setSelectedMatch(match)}
+                  className="cursor-pointer"
+                >
+                  {/* Note: Pass a prop to MatchCard to disable its internal button if needed, 
+                  or just let the whole area be clickable */}
+                  <MatchCard match={match} />
+                </div>
               ))}
             </div>
           )}
+          {/* Detail Modal */}
+       {selectedMatch && (
+         <MatchDetailModal
+           isOpen={!!selectedMatch}
+           onClose={() => setSelectedMatch(null)}
+           match={selectedMatch}
+         />
+       )}
         </div>
 
         {/* 3. Quick Actions */}
@@ -112,17 +126,17 @@ export default function DashboardPage() {
 
         {/* Manager Section */}
         {(member.roles.includes('ADMIN') || member.roles.includes('MANAGER')) && (
-        <div className="col-span-2">
-          <button 
-            onClick={() => router.push('/manager')}
-            className="bg-black text-white p-4 rounded-xl shadow-sm text-center active:scale-95 transition-transform col-span-2"
-          >
-            <span className="block text-xl mb-1">🛡️</span>
-            <span className="text-sm font-medium">관리자 모드 접속</span>
-          </button>
-        </div>
+          <div className="col-span-2">
+            <button
+              onClick={() => router.push('/manager')}
+              className="bg-black text-white p-4 rounded-xl shadow-sm text-center active:scale-95 transition-transform col-span-2"
+            >
+              <span className="block text-xl mb-1">🛡️</span>
+              <span className="text-sm font-medium">관리자 모드 접속</span>
+            </button>
+          </div>
         )}
       </main>
     </div>
-  )
+  );
 }

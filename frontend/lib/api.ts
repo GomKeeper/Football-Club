@@ -8,37 +8,6 @@ export interface Member {
     status: 'PENDING' | 'ACTIVE' | 'REJECTED'; // Changed to Uppercase to match backend
 }
 
-export interface MatchTemplate {
-  id: number;
-  club_id: number;
-  name: string;
-  description?: string;
-  day_of_week: number; // 0=Mon, 6=Sun
-  start_time: string;  // "11:00:00" (UTC)
-  duration_minutes: number;
-  location: string;
-  polling_start_hours_before: number;
-  soft_deadline_hours_before: number;
-  hard_deadline_hours_before: number;
-  min_participants: number;
-  max_participants: number;
-}
-
-export interface Match {
-  id: number;
-  name: string;
-  start_time: string; // ISO String (UTC)
-  status: 'RECRUITING' | 'CLOSED' | 'CANCELLED' | 'FINISHED';
-  description?: string;
-  location: string;
-  min_participants: number;
-  max_participants: number;
-  polling_start_at: string; // ISO String (UTC)
-  soft_deadline_at: string; // ISO String (UTC)
-  hard_deadline_at: string; // ISO String (UTC)
-  club_id: number;
-}
-
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   
   export async function syncUserWithBackend(supabaseUser: any) {
@@ -94,6 +63,22 @@ export interface Match {
     }
   }
 
+  export interface MatchTemplate {
+    id: number;
+    club_id: number;
+    name: string;
+    description?: string;
+    day_of_week: number; // 0=Mon, 6=Sun
+    start_time: string;  // "11:00:00" (UTC)
+    duration_minutes: number;
+    location: string;
+    polling_start_hours_before: number;
+    soft_deadline_hours_before: number;
+    hard_deadline_hours_before: number;
+    min_participants: number;
+    max_participants: number;
+  }
+
   export async function getMatchTemplates(clubId: number) {
     const response = await fetch(`${API_URL}/match-templates/club/${clubId}`, {
       method: "GET",
@@ -107,6 +92,22 @@ export interface Match {
     }
   
     return response.json() as Promise<MatchTemplate[]>;
+  }
+
+  export interface Match {
+    id: number;
+    name: string;
+    start_time: string; // ISO String (UTC)
+    duration_minutes: number;
+    status: 'RECRUITING' | 'CLOSED' | 'CANCELLED' | 'FINISHED';
+    description?: string;
+    location: string;
+    min_participants: number;
+    max_participants: number;
+    polling_start_at: string; // ISO String (UTC)
+    soft_deadline_at: string; // ISO String (UTC)
+    hard_deadline_at: string; // ISO String (UTC)
+    club_id: number;
   }
 
   export async function generateMatch(templateId: number, matchDate: string) {
@@ -140,4 +141,65 @@ export interface Match {
     }
   
     return response.json() as Promise<Match[]>;
+  }
+
+  export interface ManualMatchPayload {
+    club_id: number;
+    name: string;
+    start_time: string; // ISO String (UTC)
+    location: string;
+    description?: string;
+    duration_minutes: number;
+    polling_start_at?: string; // ISO String (UTC)
+    soft_deadline_at?: string; // ISO String (UTC)
+    hard_deadline_at?: string; // ISO String (UTC)
+    min_participants: number;
+    max_participants: number;
+  }
+  
+  export async function createManualMatch(payload: ManualMatchPayload) {
+    const response = await fetch(`${API_URL}/matches/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  
+    if (!response.ok) {
+      throw new Error("Failed to create manual match");
+    }
+  
+    return response.json() as Promise<Match>;
+  }
+
+  export interface MatchUpdatePayload {
+    name?: string;
+    location?: string;
+    start_time?: string;
+    status?: string;
+    description?: string;
+    polling_start_at?: string;
+    soft_deadline_at?: string | null;
+    hard_deadline_at?: string;
+    min_participants?: number;
+    max_participants?: number;
+  }
+  
+  export async function updateMatch(matchId: number, payload: MatchUpdatePayload) {
+    const response = await fetch(`${API_URL}/matches/${matchId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error("Failed to update match");
+    return response.json();
+  }
+
+  export async function deleteMatch(matchId: number) {
+    const response = await fetch(`${API_URL}/matches/${matchId}`, {
+      method: "DELETE",
+    });
+    if (!response.ok) throw new Error("Failed to delete match");
+    return true;
   }

@@ -1,18 +1,5 @@
 import { Match } from '@/lib/api'
-
-// Helper to format specific Date (e.g. "2/11 (Tue) 20:00")
-function formatMatchDate(isoString: string) {
-  const date = new Date(isoString)
-  const formatter = new Intl.DateTimeFormat('ko-KR', {
-    month: 'numeric',
-    day: 'numeric',
-    weekday: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  })
-  return formatter.format(date)
-}
+import { formatKST } from '@/lib/utils'
 
 // Helper for D-Day
 function getDDay(isoString: string) {
@@ -49,7 +36,7 @@ export default function MatchCard({ match }: { match: Match }) {
       
       <div className="space-y-1 text-sm text-gray-600 mb-4">
         <p className="flex items-center gap-2">
-          <span>📅</span> {formatMatchDate(match.start_time)}
+          <span>📅</span> {formatKST(match.start_time)}
         </p>
         <p className="flex items-center gap-2">
           <span>📍</span> {match.location}

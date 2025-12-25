@@ -120,7 +120,7 @@ class Match(SQLModel, table=True):
     
     # 🤖 Calculated Deadlines (UTC)
     polling_start_at: datetime
-    soft_deadline_at: datetime
+    soft_deadline_at: Optional[datetime] = Field(default=None) # Defualt: None
     hard_deadline_at: datetime
     
     # Participants Limits
@@ -228,3 +228,18 @@ class MatchTemplateUpdate(SQLModel):
     polling_start_hours_before: Optional[int] = None
     soft_deadline_hours_before: Optional[int] = None
     hard_deadline_hours_before: Optional[int] = None
+
+class MatchUpdate(SQLModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    location: Optional[str] = None
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    status: Optional[MatchStatus] = None # Enums are uppercase now
+    
+    polling_start_at: Optional[datetime] = None
+    soft_deadline_at: Optional[datetime] = None
+    hard_deadline_at: Optional[datetime] = None
+    
+    min_participants: Optional[int] = None
+    max_participants: Optional[int] = None
