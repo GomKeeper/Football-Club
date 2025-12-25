@@ -76,8 +76,8 @@ export default function MatchDetailModal({
 
     const now = new Date();
     // Ensure we handle both string formats or Date objects from API
-    const hardDeadline = new Date(match.hard_deadline_at || match.hard_deadline);
-    const softDeadline = new Date(match.soft_deadline_at || match.soft_deadline);
+    const hardDeadline = new Date(match.hard_deadline_at || match.hard_deadline_at);
+    const softDeadline = new Date(match.soft_deadline_at || match.soft_deadline_at);
 
     if (now > hardDeadline) {
       alert('투표가 마감되었습니다.');
