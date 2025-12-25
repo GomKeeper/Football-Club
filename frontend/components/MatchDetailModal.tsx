@@ -1,6 +1,6 @@
 'use client';
-import { parseKSTForInput, formatKST, calculateTimeRemaining } from '@/lib/utils';
-import { type Match } from '@/lib/api';
+import { formatKST, calculateTimeRemaining } from '@/lib/utils';
+import { type Match, voteMatch, getMyParticipation, type Participation } from '@/lib/api';
 import { useState, useEffect } from 'react';
 
 interface Props {
@@ -11,6 +11,18 @@ interface Props {
 
 export default function MatchDetailModal({ isOpen, onClose, match }: Props) {
   const [, setTick] = useState(0);
+  const [myVote, setMyVote] = useState<Participation | null>(null);
+  const [voteLoading, setVoteLoading] = useState(false);
+  const [comment, setComment] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      getMyParticipation(match.id).then((data) => {
+        setMyVote(data);
+        if (data?.comment) setComment(data.comment);
+      });
+    }
+  }, [isOpen, match.id]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -19,6 +31,68 @@ export default function MatchDetailModal({ isOpen, onClose, match }: Props) {
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const isHardClosed = () => {
+    if (match.hard_deadline_at) {
+      const { isExpired } = calculateTimeRemaining(match.hard_deadline_at)!;
+      if (isExpired) return true;
+    }
+    return false;
+  };
+
+  const isSoftClosed = () => {
+    if (match.soft_deadline_at) {
+      const { isExpired } = calculateTimeRemaining(match.soft_deadline_at)!;
+      if (isExpired) return true;
+    }
+    return false;
+  };
+
+  const handleVote = async (status: 'ATTENDING' | 'ABSENT' | 'PENDING') => {
+    if (isHardClosed()) {
+      alert('투표가 마감되었습니다.');
+      return;
+    }
+    // Block Pending if Soft Deadline passed
+    if (status === 'PENDING' && isSoftClosed()) {
+      alert("독려 알림(Soft Deadline) 이후에는 '미정'을 선택할 수 없습니다.");
+      return;
+    }
+
+    setVoteLoading(true);
+    try {
+      // Pass comment along with status
+      const result = await voteMatch(match.id, status, comment);
+      setMyVote(result);
+      alert('투표가 저장되었습니다.');
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setVoteLoading(false);
+    }
+  };
+
+  // Helper to check if voting is closed
+  const isVotingClosed = () => {
+    // Check hard deadline
+    if (match.hard_deadline_at) {
+      const { isExpired } = calculateTimeRemaining(match.hard_deadline_at)!;
+      if (isExpired) return true;
+    }
+    // Check polling start
+    if (match.polling_start_at) {
+      const now = new Date();
+      const start = new Date(
+        match.polling_start_at.endsWith('Z')
+          ? match.polling_start_at
+          : match.polling_start_at + 'Z',
+      );
+      if (now < start) return true;
+    }
+    return false;
+  };
+
+  const votingClosed = isVotingClosed();
 
   // --- Render Helper ---
   const renderCountdown = (targetDateStr?: string | null) => {
@@ -117,6 +191,82 @@ export default function MatchDetailModal({ isOpen, onClose, match }: Props) {
 
             {match.description && (
               <InfoRow icon="📝" label="Notice" value={match.description} isLongText />
+            )}
+          </div>
+
+          {/* 👇 NEW: Footer Actions (Sticky Bottom) */}
+          <div className="pt-4 mt-auto border-t border-gray-100">
+            {votingClosed ? (
+              <div className="text-center p-4 bg-gray-100 rounded-xl text-gray-500 font-bold">
+                🚫 투표 기간이 아닙니다
+              </div>
+            ) : (
+              <>
+                {/* Comment Input */}
+                <div>
+                  <input
+                    type="text"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="참석 관련 메모 (예: 11시까지 가능, 지각 예정 등)"
+                    className="w-full text-sm p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none bg-gray-50"
+                  />
+                </div>
+
+                {/* 3 Buttons Grid */}
+                <div className="grid grid-cols-3 gap-2">
+                  {/* ABSENT */}
+                  <button
+                    onClick={() => handleVote('ABSENT')}
+                    disabled={voteLoading}
+                    className={`py-3 rounded-xl font-bold text-sm transition-all border ${
+                      myVote?.status === 'ABSENT'
+                        ? 'bg-red-500 text-white border-red-500'
+                        : 'bg-white text-gray-400 border-gray-200 hover:border-red-200'
+                    }`}
+                  >
+                    불참
+                  </button>
+
+                  {/* PENDING (Disable if soft closed) */}
+                  <button
+                    onClick={() => handleVote('PENDING')}
+                    disabled={voteLoading || isSoftClosed()}
+                    className={`py-3 rounded-xl font-bold text-sm transition-all border ${
+                      myVote?.status === 'PENDING'
+                        ? 'bg-yellow-400 text-white border-yellow-400'
+                        : isSoftClosed()
+                        ? 'bg-gray-100 text-gray-300 border-gray-100 cursor-not-allowed'
+                        : 'bg-white text-gray-400 border-gray-200 hover:border-yellow-200'
+                    }`}
+                  >
+                    {isSoftClosed() ? '미정 불가' : '미정'}
+                  </button>
+
+                  {/* ATTENDING */}
+                  <button
+                    onClick={() => handleVote('ATTENDING')}
+                    disabled={voteLoading}
+                    className={`py-3 rounded-xl font-bold text-sm transition-all border ${
+                      myVote?.status === 'ATTENDING'
+                        ? 'bg-green-600 text-white border-green-600'
+                        : 'bg-white text-gray-400 border-gray-200 hover:border-green-200'
+                    }`}
+                  >
+                    참석
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* Status Text */}
+            {myVote && (
+              <p className="text-center text-xs text-gray-400 mt-2">
+                현재 상태:{' '}
+                <span className="font-bold text-black">
+                  {myVote.status === 'ATTENDING' ? '참석 예정' : '불참'}
+                </span>
+              </p>
             )}
           </div>
 

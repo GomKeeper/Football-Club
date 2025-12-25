@@ -12,10 +12,9 @@ class Role(str, Enum):
     ANNOUNCER = "ANNOUNCER"
 
 class ParticipationStatus(str, Enum):
-    JOIN = "JOIN"
+    ATTENDING = "ATTENDING"
     ABSENT = "ABSENT"
-    TBD = "TBD"
-    NONE = "NONE"
+    PENDING = "PENDING"
 
 class NotificationType(str, Enum):
     INITIAL_POLLING = "INITIAL_POLLING"
@@ -65,7 +64,7 @@ class Member(SQLModel, table=True):
     
     club: Optional[Club] = Relationship(back_populates="members")
     memberships: List["Membership"] = Relationship(back_populates="member")
-    participations: List["Participant"] = Relationship(back_populates="member")
+    participations: List["Participation"] = Relationship(back_populates="member")
 
 class Membership(SQLModel, table=True):
     """Annual membership status (e.g. 2025 Member)"""
@@ -131,18 +130,24 @@ class Match(SQLModel, table=True):
     
     # Relationships
     club: Optional["Club"] = Relationship(back_populates="matches")
+    participations: List["Participation"] = Relationship(back_populates="match")
 
-class Participant(SQLModel, table=True):
+class Participation(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    match_id: int = Field(foreign_key="match.id")
-    member_id: int = Field(foreign_key="member.id")
     
-    status: ParticipationStatus = Field(default=ParticipationStatus.NONE)
-    additional_message: Optional[str] = None
+    # Foreign Keys
+    match_id: int = Field(foreign_key="match.id", index=True)
+    member_id: int = Field(foreign_key="member.id", index=True)
+    
+    # Vote Details
+    status: ParticipationStatus
+    comment: Optional[str] = None # e.g. "I might be 10 mins late"
+    
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    # match: Match = Relationship(back_populates="participants")
-    member: Member = Relationship(back_populates="participations")
+    # Relationships
+    member: "Member" = Relationship(back_populates="participations")
+    match: "Match" = Relationship(back_populates="participations")
 
 class NotificationLog(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

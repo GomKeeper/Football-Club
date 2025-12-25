@@ -1,18 +1,24 @@
-import './globals.css'
-import { AuthProvider } from '@/components/AuthProvider' // Import this
+import type { Metadata } from "next";
+import "./globals.css";
+import { AuthProvider } from "@/components/AuthProvider";
+
+export const metadata: Metadata = {
+  title: "Football Club Manager",
+  description: "Manage your football club matches and voting",
+};
 
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en">
-      <body>
+      <body className="antialiased bg-gray-50 text-gray-900">
         <AuthProvider>
-           {children}
+          {children}
         </AuthProvider>
       </body>
     </html>
-  )
+  );
 }

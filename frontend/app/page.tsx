@@ -4,37 +4,27 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
-  const { signInWithKakao, user, member, loading } = useAuth()
+  const { login, loading } = useAuth();
   const router = useRouter()
 
-  useEffect(() => {
-    if (!loading && user && member) {
-      // 🚦 THE TRAFFIC COP LOGIC
-      if (member.status === 'ACTIVE') {
-        router.push('/dashboard') 
-      } else {
-        router.push('/pending')
-      }
-    }
-  }, [user, member, loading, router])
-
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-24 bg-gray-100">
-      <div className="bg-white p-8 rounded-xl shadow-lg text-center max-w-sm w-full">
-        {/* Changed to Korean */}
-        <h1 className="text-2xl font-bold mb-6 text-gray-900">신사에이스 FC ⚽</h1>
-        <p className="mb-8 text-gray-500">
-          매치 일정 관리 및 참석 투표 시스템
-        </p>
-        
-        <button
-          onClick={signInWithKakao}
-          disabled={loading}
-          className="w-full bg-[#FEE500] hover:bg-[#FDD835] text-black font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-all"
-        >
-          {loading ? '로딩 중...' : '카카오로 3초 만에 시작하기'}
-        </button>
+    <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-white">
+      <div className="text-center space-y-4 mb-10">
+        <h1 className="text-4xl font-bold tracking-tight text-gray-900">신사에이스 FC 매치 관리 시스템</h1>
+        <p className="text-gray-500">Football Club Management System</p>
       </div>
-    </div>
-  )
+
+      <button
+        onClick={login} // 👈 Connect the new function
+        disabled={loading}
+        className="bg-[#FEE500] text-[#000000] px-8 py-4 rounded-xl font-bold text-lg hover:bg-[#FDD835] transition-colors flex items-center gap-2 shadow-sm"
+      >
+        {/* Kakao Icon SVG */}
+        <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
+          <path d="M12 3C6.48 3 2 6.48 2 10.76c0 2.79 1.86 5.28 4.74 6.75-.24.87-.87 3.17-1 3.65-.16.56.2.56.42.4 2.8-1.92 5.6-3.86 6.04-4.16.6.09 1.21.14 1.83.14 5.52 0 10-3.48 10-7.76S17.52 3 12 3z" />
+        </svg>
+        {loading ? '로딩 중...' : '카카오로 시작하기'}
+      </button>
+    </main>
+  );
 }
