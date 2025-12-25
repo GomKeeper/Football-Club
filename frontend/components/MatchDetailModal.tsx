@@ -251,11 +251,11 @@ export default function MatchDetailModal({
                     <div className="flex flex-col gap-2 text-xs text-gray-500 px-1">
                       <div className="flex justify-between">
                         <span>독려 마감 (Soft)</span>
-                        <span className="font-mono">{formatKST(match.soft_deadline_at || match.soft_deadline)}</span>
+                        <span className="font-mono">{formatKST(match.soft_deadline_at)}</span>
                       </div>
                       <div className="flex justify-between text-yellow-600">
                         <span>투표 마감 (Hard)</span>
-                        <span className="font-mono">{formatKST(match.hard_deadline_at || match.hard_deadline)}</span>
+                        <span className="font-mono">{formatKST(match.hard_deadline_at)}</span>
                       </div>
                     </div>
 
