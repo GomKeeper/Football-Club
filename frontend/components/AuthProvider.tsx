@@ -1,92 +1,147 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase'
-import { syncUserWithBackend, Member } from '@/lib/api'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
+import { loginWithBackend, getMe, type Member } from '@/lib/api'
+import Script from 'next/script'
+
+declare global {
+  interface Window {
+    Kakao: any;
+  }
+}
 
 interface AuthContextType {
-  user: any | null; // Supabase User
-  member: Member | null; // Our Backend Member
+  member: Member | null;
   loading: boolean;
-  signInWithKakao: () => void;
-  signOut: () => void;
+  login: () => void;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<any>(null)
   const [member, setMember] = useState<Member | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
-  const supabase = createClient()
+  const pathname = usePathname()
 
-  const signInWithKakao = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'kakao',
-      options: {
-        redirectTo: `${location.origin}/auth/callback`,
-        // ⚡️ FIX: Use queryParams to strictly override the scope string
-        queryParams: {
-          scope: 'profile_nickname profile_image', 
-          prompt: 'login', // Optional: Forces the consent screen to appear again
-        },
-      },
-    })
-  }
-
-  const signOut = async () => {
-    await supabase.auth.signOut()
-    setUser(null)
-    setMember(null)
-    router.push('/login')
-  }
-
+  // 1. Session Check (Runs once on mount)
   useEffect(() => {
-    // 1. Check active session
-    const initAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (session?.user) {
-        setUser(session.user)
-        // 2. Sync with Railway Backend
-        const dbMember = await syncUserWithBackend(session.user)
-        setMember(dbMember)
+    async function loadUser() {
+      try {
+        const existingMember = await getMe();
+        if (existingMember) setMember(existingMember);
+        else localStorage.removeItem('token');
+      } catch (e) {
+        localStorage.removeItem('token');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false)
     }
+    loadUser();
+  }, []);
 
-    initAuth()
+  // 2. 🚦 THE TRAFFIC CONTROLLER (New Auto-Redirect Logic)
+  useEffect(() => {
+    // If user IS logged in AND they are on the Login Page ('/')
+    if (member && pathname === '/') {
+        console.log("🚀 Redirecting to Dashboard...");
+        router.push('/dashboard');
+    }
+  }, [member, pathname, router]);
 
-    // 3. Listen for changes (e.g. sign out)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        setUser(session.user)
-        // Avoid double-syncing if we already have the member
-        if (!member) { 
-             const dbMember = await syncUserWithBackend(session.user)
-             setMember(dbMember)
-        }
-      } else {
-        setUser(null)
-        setMember(null)
+  // 3. The Initialization Logic
+  const initKakao = () => {
+    // Debug Log (Optional, remove in production)
+    console.log("🔑 Env Key Check:", process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID ? "Exists" : "MISSING");
+
+    if (window.Kakao && !window.Kakao.isInitialized()) {
+      // 👇 Safety check using your Vercel/Local variable name
+      if (!process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID) {
+        console.error("❌ NEXT_PUBLIC_KAKAO_CLIENT_ID is missing in .env.local");
+        return;
       }
-      setLoading(false)
-    })
+      
+      // 👇 Initialize with the correct key
+      window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID);
+      console.log("✅ Kakao SDK Loaded & Initialized");
+    }
+  };
 
-    return () => subscription.unsubscribe()
-  }, [])
+// 3. Login Function
+const login = () => {
+  // Retry init if needed
+  if (!window.Kakao || !window.Kakao.isInitialized()) {
+    initKakao();
+  }
 
-  return (
-    <AuthContext.Provider value={{ user, member, loading, signInWithKakao, signOut }}>
-      {children}
-    </AuthContext.Provider>
-  )
+  if (!window.Kakao || !window.Kakao.isInitialized()) {
+    alert("Kakao SDK not ready. Please refresh.");
+    return;
+  }
+
+  // 👇 This function (popup) is guaranteed to exist in the V1 SDK
+  window.Kakao.Auth.login({
+    success: () => {
+      window.Kakao.API.request({
+        url: '/v2/user/me',
+        success: async (res: any) => {
+          try {
+            setLoading(true);
+            const kakaoAccount = res.kakao_account;
+            
+            const payload = {
+              kakao_id: res.id.toString(),
+              name: kakaoAccount.profile?.nickname || 'Unknown',
+              email: kakaoAccount.email || `no-email-${res.id}@example.com`,
+            };
+
+            await loginWithBackend(payload);
+            const realMember = await getMe();
+            setMember(realMember);
+            router.push('/dashboard'); 
+            
+          } catch (error) {
+            console.error("Login Failed:", error);
+            alert("로그인 처리 실패");
+          } finally {
+            setLoading(false);
+          }
+        },
+        fail: (err: any) => {
+          console.error("API Error:", err);
+          setLoading(false);
+        },
+      });
+    },
+    fail: (err: any) => {
+      console.error("Login Error:", err);
+    },
+  });
+};
+
+const logout = () => {
+  localStorage.removeItem('token');
+  setMember(null);
+  router.push('/');
+};
+
+return (
+  <AuthContext.Provider value={{ member, loading, login, logout }}>
+    {/* 👇 FIXED: Using the V1 Legacy SDK URL */}
+    <Script
+      src="https://developers.kakao.com/sdk/js/kakao.min.js"
+      strategy="afterInteractive"
+      onLoad={initKakao} 
+    />
+    {children}
+  </AuthContext.Provider>
+)
 }
 
 export const useAuth = () => {
-  const context = useContext(AuthContext)
-  if (!context) throw new Error('useAuth must be used within an AuthProvider')
-  return context
+const context = useContext(AuthContext)
+if (!context) throw new Error('useAuth must be used within an AuthProvider')
+return context
 }

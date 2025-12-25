@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
 export default function PendingPage() {
-  const { member, signOut } = useAuth()
+  const { member, logout } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export default function PendingPage() {
         </div>
 
         <button 
-          onClick={signOut}
+          onClick={logout}
           className="text-gray-400 hover:text-gray-600 underline text-sm"
         >
           로그아웃

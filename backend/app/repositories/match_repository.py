@@ -1,5 +1,5 @@
 from typing import List
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlmodel import Session, select
 from app.models import Match
 from typing import Optional
@@ -19,7 +19,7 @@ class MatchRepository:
         statement = (
             select(Match)
             .where(Match.club_id == club_id)
-            .where(Match.start_time >= datetime.utcnow())  # Only future matches
+            .where(Match.start_time >= datetime.now(timezone.utc))  # Only future matches
             .order_by(Match.start_time)  # Soonest first
         )
         return self.session.exec(statement).all()

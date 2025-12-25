@@ -7,33 +7,49 @@ import MatchCard from '@/components/MatchCard';
 import MatchDetailModal from '@/components/MatchDetailModal';
 
 export default function DashboardPage() {
-  const { user, member, loading, signOut } = useAuth();
+  // 👇 1. DESTUCTURE ONLY WHAT EXISTS (Removed 'user')
+  const { member, loading, logout } = useAuth();
   const router = useRouter();
   const [matches, setMatches] = useState<Match[]>([]);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
 
-  // 🛡️ Route Protection: Kick out unauthorized users
+  // 🛡️ Effect 1: Route Protection (The Traffic Guard)
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push('/'); // Not logged in -> Go to Login
-      } else if (member && member.status !== 'ACTIVE') {
-        router.push('/pending'); // Not active -> Go to Waiting Room
-      }
-    }
-  }, [user, member, loading, router]);
+    // 🛑 STOP: Do nothing until AuthProvider finishes checking session
+    if (loading) return;
 
+    // 🛑 CHECK: If loading is done, but no member found -> Kick out
+    if (!member) {
+      router.replace('/'); // 'replace' is better than 'push' for redirects
+      return;
+    }
+
+    // 🛑 CHECK: Member exists, but not active -> Waiting Room
+    if (member.status !== 'ACTIVE') {
+      router.push('/pending');
+    }
+  }, [member, loading, router]);
+
+  // ⚽️ Effect 2: Data Fetching (Only runs if safe)
   useEffect(() => {
-    if (!loading && member) {
-      //TODO: Fetch Club 1 Matches (Hardcoded for now)
+    // Only fetch if we are 100% sure we have an ACTIVE member
+    if (!loading && member && member.status === 'ACTIVE') {
       getUpcomingMatches(1).then(setMatches).catch(console.error);
     }
   }, [loading, member]);
 
-  if (loading || !member) {
+  // ⏳ Render: Show Loading Screen while checking
+  // This prevents the "Flash of Unauthenticated Content"
+  if (loading || !member || member.status !== 'ACTIVE') {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50">
-        <div className="text-gray-500 animate-pulse">로딩 중...</div>
+        <div className="flex flex-col items-center gap-3">
+          {/* Simple CSS Spinner */}
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900"></div>
+          <div className="text-gray-500 text-sm animate-pulse">
+            {loading ? '로그인 확인 중...' : '페이지 이동 중...'}
+          </div>
+        </div>
       </div>
     );
   }
@@ -49,7 +65,7 @@ export default function DashboardPage() {
           </span>
         </div>
         <button
-          onClick={signOut}
+          onClick={logout}
           className="text-sm text-gray-500 hover:text-red-500 transition-colors"
         >
           로그아웃
@@ -103,13 +119,13 @@ export default function DashboardPage() {
             </div>
           )}
           {/* Detail Modal */}
-       {selectedMatch && (
-         <MatchDetailModal
-           isOpen={!!selectedMatch}
-           onClose={() => setSelectedMatch(null)}
-           match={selectedMatch}
-         />
-       )}
+          {selectedMatch && (
+            <MatchDetailModal
+              isOpen={!!selectedMatch}
+              onClose={() => setSelectedMatch(null)}
+              match={selectedMatch}
+            />
+          )}
         </div>
 
         {/* 3. Quick Actions */}

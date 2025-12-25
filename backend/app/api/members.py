@@ -3,8 +3,16 @@ from typing import List
 from app.models import Member, MemberUpdate
 from app.services.member_service import MemberService
 from app.core.dependencies import get_member_service
+from app.core.auth import get_current_active_member
 
 router = APIRouter()
+
+@router.get("/me", response_model=Member)
+def read_users_me(current_member: Member = Depends(get_current_active_member)):
+    """
+    Get current logged-in member's full profile.
+    """
+    return current_member
 
 @router.post("/", response_model=Member)
 def create_member(
