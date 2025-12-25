@@ -1,6 +1,7 @@
 from typing import Optional
 from sqlmodel import Session, select
 from app.models import Participation
+from typing import Sequence
 
 
 class ParticipationRepository:
@@ -20,3 +21,7 @@ class ParticipationRepository:
         self.session.commit()
         self.session.refresh(participation)
         return participation
+
+    def get_by_member_id(self: Session, member_id: int) -> Sequence[Participation]:
+        statement = select(Participation).where(Participation.member_id == member_id)
+        return self.session.exec(statement).all()

@@ -5,7 +5,7 @@ from app.core.dependencies import get_participation_service
 from app.core.auth import get_current_active_member  # We need to know WHO is voting
 from app.models import Member
 from sqlmodel import SQLModel
-from typing import Optional
+from typing import Optional, List
 
 router = APIRouter()
 
@@ -39,3 +39,14 @@ def get_my_vote(
     Returns null if no vote has been cast.
     """
     return service.get_my_vote(match_id, current_member.id)
+
+@router.get("/me", response_model=List[Participation])
+def read_my_participations(
+    current_member: Member = Depends(get_current_active_member),
+    service: ParticipationService = Depends(get_participation_service),
+):
+    """
+    Get all participations for the current logged-in user.
+    Uses the Service Layer to fetch data.
+    """
+    return service.list_member_participations(current_member.id)

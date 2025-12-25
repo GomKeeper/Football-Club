@@ -39,6 +39,23 @@ export function formatKST(isoString: string) {
   }).format(date);
 }
 
+export function formatKSTHHMM(isoString: string) {
+  if (!isoString) return "";
+
+  // 1. Ensure the string ends with 'Z' if it's missing, to force UTC parsing
+  const utcString = isoString.endsWith('Z') ? isoString : `${isoString}Z`;
+  
+  const date = new Date(utcString);
+
+  // 2. Use Intl.DateTimeFormat with explicit Asia/Seoul timezone
+  return new Intl.DateTimeFormat('ko-KR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Seoul'
+  }).format(date);
+}
+
 export function parseKSTForInput(isoString: string) {
   const utcString = isoString.endsWith('Z') ? isoString : `${isoString}Z`;
   const date = new Date(utcString);

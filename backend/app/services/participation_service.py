@@ -4,7 +4,7 @@ from app.models import Participation, ParticipationStatus
 from app.repositories.participation_repository import ParticipationRepository
 from app.repositories.match_repository import MatchRepository
 
-from typing import Optional
+from typing import Optional, Sequence
 
 
 class ParticipationService:
@@ -79,3 +79,6 @@ class ParticipationService:
 
     def get_my_vote(self, match_id: int, member_id: int) -> Participation | None:
         return self.participation_repository.get_participation(match_id, member_id)
+
+    def list_member_participations(self, member_id: int) -> Sequence[Participation]:
+        return self.participation_repository.get_by_member_id(member_id)

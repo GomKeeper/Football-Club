@@ -2,9 +2,44 @@
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getUpcomingMatches, Match } from '@/lib/api';
+import { getUpcomingMatches, Match, Participation, getMyParticipations } from '@/lib/api';
 import MatchCard from '@/components/MatchCard';
 import MatchDetailModal from '@/components/MatchDetailModal';
+import { formatKST } from '@/lib/utils';
+
+const getMatchDisplayStatus = (match: Match) => {
+  const now = new Date();
+  const pollingStart = new Date(match.polling_start_at);
+  const hardDeadline = new Date(match.hard_deadline_at);
+
+  // Case A: Too Early (Voting hasn't started)
+  if (now < pollingStart) {
+    return {
+      label: '오픈 예정',
+      color: 'bg-gray-100 text-gray-500 border-gray-200',
+      canVote: false,
+      message: `${formatKST(match.polling_start_at)} 오픈`,
+    };
+  }
+
+  // Case B: Too Late (Hard Deadline passed)
+  if (now > hardDeadline) {
+    return {
+      label: '마감됨',
+      color: 'bg-red-100 text-red-600 border-red-200',
+      canVote: false,
+      message: '투표가 종료되었습니다.',
+    };
+  }
+
+  // Case C: Open (Recruiting)
+  return {
+    label: '모집중',
+    color: 'bg-blue-100 text-blue-700 border-blue-200',
+    canVote: true,
+    message: null,
+  };
+};
 
 export default function DashboardPage() {
   // 👇 1. DESTUCTURE ONLY WHAT EXISTS (Removed 'user')
@@ -12,6 +47,8 @@ export default function DashboardPage() {
   const router = useRouter();
   const [matches, setMatches] = useState<Match[]>([]);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+
+  const [voteMap, setVoteMap] = useState<Record<number, Participation>>({});
 
   // 🛡️ Effect 1: Route Protection (The Traffic Guard)
   useEffect(() => {
@@ -28,15 +65,29 @@ export default function DashboardPage() {
     if (member.status !== 'ACTIVE') {
       router.push('/pending');
     }
-  }, [member, loading, router]);
 
-  // ⚽️ Effect 2: Data Fetching (Only runs if safe)
-  useEffect(() => {
-    // Only fetch if we are 100% sure we have an ACTIVE member
-    if (!loading && member && member.status === 'ACTIVE') {
-      getUpcomingMatches(1).then(setMatches).catch(console.error);
-    }
-  }, [loading, member]);
+    const fetchData = async () => {
+      try {
+        const [matchesData, myVotesData] = await Promise.all([
+          getUpcomingMatches(1),
+          getMyParticipations(), // Fetch existing votes from DB
+        ]);
+
+        setMatches(matchesData);
+
+        // 👇 CONVERT ARRAY TO MAP (Key: match_id, Value: Participation)
+        const initialMap: Record<number, Participation> = {};
+        myVotesData.forEach((vote) => {
+          initialMap[vote.match_id] = vote;
+        });
+        setVoteMap(initialMap);
+      } catch (error) {
+        console.error('Failed to load dashboard data', error);
+      }
+    };
+
+    fetchData();
+  }, [loading, member, router]);
 
   // ⏳ Render: Show Loading Screen while checking
   // This prevents the "Flash of Unauthenticated Content"
@@ -53,6 +104,25 @@ export default function DashboardPage() {
       </div>
     );
   }
+
+  const handleVoteUpdate = (newVote: Participation) => {
+    setVoteMap((prev) => ({
+      ...prev,
+      [newVote.match_id]: newVote,
+    }));
+  };
+
+  const handleMatchClick = (match: Match) => {
+    const status = getMatchDisplayStatus(match);
+
+    if (!status.canVote) {
+      // Show alert if clicked when not open
+      alert(status.message || '현재 투표할 수 없는 상태입니다.');
+      return;
+    }
+
+    setSelectedMatch(match);
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 pb-20">
@@ -83,9 +153,9 @@ export default function DashboardPage() {
           />
           <div>
             <p className="text-gray-500 text-sm">안녕하세요 👋</p>
-            <h2 className="text-xl font-bold text-gray-900">{member.name}님</h2>
+            <h2 className="text-xl font-bold text-gray-900">{member.name} 님</h2>
             <p className="text-xs text-gray-400 mt-1">
-              등급: {member.roles.includes('admin') ? '운영진' : '정회원'}
+              등급: {member.roles.includes('ADMIN') ? '운영진' : '정회원'}
             </p>
           </div>
         </div>
@@ -104,18 +174,29 @@ export default function DashboardPage() {
           ) : (
             // Matches List
             <div className="grid gap-4">
-              {matches.map((match) => (
-                // Wrap MatchCard in a clickable div
-                <div
-                  key={match.id}
-                  onClick={() => setSelectedMatch(match)}
-                  className="cursor-pointer"
-                >
-                  {/* Note: Pass a prop to MatchCard to disable its internal button if needed, 
-                  or just let the whole area be clickable */}
-                  <MatchCard match={match} />
-                </div>
-              ))}
+              {matches.map((match) => {
+                // 👇 Calculate status inside the loop
+                const displayStatus = getMatchDisplayStatus(match);
+
+                return (
+                  <div
+                    key={match.id}
+                    onClick={() => handleMatchClick(match)}
+                    // 👇 Apply Dimmed Effect if not voteable
+                    className={`transition-opacity duration-200 ${
+                      displayStatus.canVote
+                        ? 'cursor-pointer'
+                        : 'cursor-not-allowed opacity-60 grayscale-[0.5]'
+                    }`}
+                  >
+                    <MatchCard
+                      match={match}
+                      myVote={voteMap[match.id]} // Pass the vote
+                      status={displayStatus} // 👈 PASS THE BADGE INFO
+                    />
+                  </div>
+                );
+              })}
             </div>
           )}
           {/* Detail Modal */}
@@ -124,6 +205,10 @@ export default function DashboardPage() {
               isOpen={!!selectedMatch}
               onClose={() => setSelectedMatch(null)}
               match={selectedMatch}
+              // ✅ PASS DATA DOWN
+              initialVote={selectedMatch ? voteMap[selectedMatch.id] : null}
+              // ✅ RECEIVE UPDATES UP
+              onVoteUpdate={handleVoteUpdate}
             />
           )}
         </div>
@@ -141,14 +226,15 @@ export default function DashboardPage() {
         </div>
 
         {/* Manager Section */}
+        {/* 👇 UPDATED: Manager Section (Full Width) */}
         {(member.roles.includes('ADMIN') || member.roles.includes('MANAGER')) && (
-          <div className="col-span-2">
+          <div className="pt-2">
             <button
               onClick={() => router.push('/manager')}
-              className="bg-black text-white p-4 rounded-xl shadow-sm text-center active:scale-95 transition-transform col-span-2"
+              className="w-full bg-gray-900 text-white p-4 rounded-xl shadow-md text-center active:scale-95 transition-transform flex items-center justify-center gap-2 hover:bg-gray-800"
             >
-              <span className="block text-xl mb-1">🛡️</span>
-              <span className="text-sm font-medium">관리자 모드 접속</span>
+              <span className="text-xl">🛡️</span>
+              <span className="text-base font-bold">관리자 모드 접속</span>
             </button>
           </div>
         )}

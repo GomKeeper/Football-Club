@@ -20,7 +20,7 @@ export async function getMe() {
 
   if (!response.ok) {
     // If token is invalid (expired), clear it
-    localStorage.removeItem('token'); 
+    localStorage.removeItem('token');
     return null;
   }
 
@@ -243,7 +243,29 @@ export async function getMyParticipation(matchId: number) {
   return text ? (JSON.parse(text) as Participation) : null;
 }
 
-export async function voteMatch(matchId: number, status: 'ATTENDING' | 'ABSENT' | 'PENDING', comment?: string) {
+export async function getMyParticipations() {
+  const token = localStorage.getItem('token');
+
+  const response = await fetch(`${API_URL}/participations/me`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch participations');
+  }
+
+  return response.json() as Promise<Participation[]>;
+}
+
+export async function voteMatch(
+  matchId: number,
+  status: 'ATTENDING' | 'ABSENT' | 'PENDING',
+  comment?: string,
+) {
   const token = localStorage.getItem('token');
 
   const response = await fetch(`${API_URL}/participations/matches/${matchId}/vote`, {
