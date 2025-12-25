@@ -9,8 +9,14 @@ import { formatKST } from '@/lib/utils';
 
 const getMatchDisplayStatus = (match: Match) => {
   const now = new Date();
-  const pollingStart = new Date(match.polling_start_at);
-  const hardDeadline = new Date(match.hard_deadline_at);
+  const rawPoll = match.polling_start_at;
+  const rawHard = match.hard_deadline_at;
+  
+  const pollString = rawPoll.endsWith('Z') ? rawPoll : `${rawPoll}Z`;
+  const hardString = rawHard.endsWith('Z') ? rawHard : `${rawHard}Z`;
+
+  const pollingStart = new Date(pollString);
+  const hardDeadline = new Date(hardString);
 
   // Case A: Too Early (Voting hasn't started)
   if (now < pollingStart) {
@@ -18,7 +24,7 @@ const getMatchDisplayStatus = (match: Match) => {
       label: '오픈 예정',
       color: 'bg-gray-100 text-gray-500 border-gray-200',
       canVote: false,
-      message: `${formatKST(match.polling_start_at)} 오픈`,
+      message: `${formatKST(pollString)} 오픈`,
     };
   }
 
