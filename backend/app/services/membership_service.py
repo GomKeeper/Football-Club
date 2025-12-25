@@ -1,6 +1,7 @@
 from fastapi import HTTPException
 from typing import List
-from app.models import Membership, MembershipUpdate, MembershipStatus
+from app.models import Membership, MembershipStatus
+from app.schema import MembershipUpdate
 from app.repositories.membership_repository import MembershipRepository
 
 class MembershipService:

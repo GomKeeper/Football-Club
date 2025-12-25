@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from typing import List
-from app.models import Membership, MembershipUpdate
+from app.models import Membership
+from app.schema import MembershipUpdate
 from app.services.membership_service import MembershipService
 from app.core.dependencies import get_membership_service
 

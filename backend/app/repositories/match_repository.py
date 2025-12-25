@@ -1,8 +1,9 @@
 from typing import List
 from datetime import datetime, timezone
 from sqlmodel import Session, select
-from app.models import Match
+from app.models import Match, Participation
 from typing import Optional
+from sqlalchemy.orm import selectinload
 
 
 class MatchRepository:
@@ -19,8 +20,13 @@ class MatchRepository:
         statement = (
             select(Match)
             .where(Match.club_id == club_id)
-            .where(Match.start_time >= datetime.now(timezone.utc))  # Only future matches
+            .where(
+                Match.start_time >= datetime.now(timezone.utc)
+            )  # Only future matches
             .order_by(Match.start_time)  # Soonest first
+            .options(
+                selectinload(Match.participations).selectinload(Participation.member)
+            )
         )
         return self.session.exec(statement).all()
 

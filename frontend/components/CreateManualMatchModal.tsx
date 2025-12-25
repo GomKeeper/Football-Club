@@ -6,9 +6,10 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   clubId: number;
+  onSuccess?: () => void
 }
 
-export default function CreateManualMatchModal({ isOpen, onClose, clubId }: Props) {
+export default function CreateManualMatchModal({ isOpen, onClose, clubId, onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [useSoftDeadline, setUseSoftDeadline] = useState(true); // Toggle for Soft Deadline
@@ -107,6 +108,11 @@ export default function CreateManualMatchModal({ isOpen, onClose, clubId }: Prop
       });
 
       alert('스페셜 매치가 생성되었습니다! 🎉');
+
+      if (onSuccess) {
+        onSuccess() 
+      }
+
       onClose();
     } catch (error: any) {
       console.error(error);
@@ -133,48 +139,48 @@ export default function CreateManualMatchModal({ isOpen, onClose, clubId }: Prop
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* ... (Keep Name, Location, Participants Inputs same as before) ... */}
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">매치 이름</label>
+            <label className="block text-sm font-bold text-gray-900 mb-1">매치 이름</label>
             <input
               name="name"
               required
               value={formData.name}
               onChange={handleChange}
-              className="w-full border-gray-300 rounded-xl p-3 border"
+              className="w-full border-gray-300 rounded-xl p-3 border text-gray-900 font-medium"
             />
           </div>
 
           <div className="grid grid-cols-3 gap-2">
             <div className="col-span-1">
-              <label className="text-xs font-bold text-gray-500">날짜</label>
+              <label className="text-xs font-bold text-gray-800">날짜</label>
               <input
                 type="date"
                 name="matchDate"
                 required
                 value={formData.matchDate}
                 onChange={handleChange}
-                className="w-full border p-2 rounded-lg text-sm"
+                className="w-full border p-2 rounded-lg text-sm text-gray-900"
               />
             </div>
             <div className="col-span-1">
-              <label className="text-xs font-bold text-gray-500">시간</label>
+              <label className="text-xs font-bold text-gray-800">시간</label>
               <input
                 type="time"
                 name="matchTime"
                 required
                 value={formData.matchTime}
                 onChange={handleChange}
-                className="w-full border p-2 rounded-lg text-sm"
+                className="w-full border p-2 rounded-lg text-sm text-gray-900"
               />
             </div>
             <div className="col-span-1">
-              <label className="text-xs font-bold text-gray-500">길이(분)</label>
+              <label className="text-xs font-bold text-gray-800">길이(분)</label>
               <input
                 type="number"
                 name="duration"
                 required
                 value={formData.duration}
                 onChange={handleChange}
-                className="w-full border p-2 rounded-lg text-sm"
+                className="w-full border p-2 rounded-lg text-sm text-gray-900"
               />
             </div>
           </div>
@@ -186,7 +192,7 @@ export default function CreateManualMatchModal({ isOpen, onClose, clubId }: Prop
               required
               value={formData.location}
               onChange={handleChange}
-              className="w-full border-gray-300 rounded-xl p-3 border"
+              className="w-full border-gray-300 rounded-xl p-3 border text-gray-900 font-medium"
             />
           </div>
 
@@ -197,7 +203,7 @@ export default function CreateManualMatchModal({ isOpen, onClose, clubId }: Prop
               rows={3}
               value={formData.desc}
               onChange={handleChange}
-              className="w-full border-gray-300 rounded-xl p-3 border focus:ring-2 focus:ring-black resize-none"
+              className="w-full border-gray-300 rounded-xl p-3 border focus:ring-2 focus:ring-black resize-none text-gray-900 font-medium"
               placeholder="준비물 등 기타 공지사항을 입력하세요."
             />
           </div>
@@ -210,7 +216,7 @@ export default function CreateManualMatchModal({ isOpen, onClose, clubId }: Prop
                 name="min"
                 value={formData.min}
                 onChange={handleChange}
-                className="w-full border p-2 rounded-lg"
+                className="w-full border p-2 rounded-lg text-gray-900"
               />
             </div>
             <div>
@@ -220,7 +226,7 @@ export default function CreateManualMatchModal({ isOpen, onClose, clubId }: Prop
                 name="max"
                 value={formData.max}
                 onChange={handleChange}
-                className="w-full border p-2 rounded-lg"
+                className="w-full border p-2 rounded-lg text-gray-900"
               />
             </div>
           </div>
@@ -246,14 +252,14 @@ export default function CreateManualMatchModal({ isOpen, onClose, clubId }: Prop
                       name="pollDate"
                       value={formData.pollDate}
                       onChange={handleChange}
-                      className="border p-2 rounded w-full"
+                      className="border p-2 rounded w-full text-gray-900"
                     />
                     <input
                       type="time"
                       name="pollTime"
                       value={formData.pollTime}
                       onChange={handleChange}
-                      className="border p-2 rounded w-32"
+                      className="border p-2 rounded w-32 text-gray-900"
                     />
                   </div>
                 </div>
@@ -266,7 +272,7 @@ export default function CreateManualMatchModal({ isOpen, onClose, clubId }: Prop
                       id="useSoft"
                       checked={useSoftDeadline}
                       onChange={(e) => setUseSoftDeadline(e.target.checked)}
-                      className="w-4 h-4 accent-black"
+                      className="w-4 h-4 accent-black text-gray-900"
                     />
                     <label htmlFor="useSoft" className="font-bold text-gray-700 cursor-pointer">
                       🔔 독려 알림 (선택)
@@ -280,14 +286,14 @@ export default function CreateManualMatchModal({ isOpen, onClose, clubId }: Prop
                         name="softDate"
                         value={formData.softDate}
                         onChange={handleChange}
-                        className="border p-2 rounded w-full"
+                        className="border p-2 rounded w-full text-gray-900"
                       />
                       <input
                         type="time"
                         name="softTime"
                         value={formData.softTime}
                         onChange={handleChange}
-                        className="border p-2 rounded w-32"
+                        className="border p-2 rounded w-32 text-gray-900"
                       />
                     </div>
                   )}
@@ -302,14 +308,14 @@ export default function CreateManualMatchModal({ isOpen, onClose, clubId }: Prop
                       name="hardDate"
                       value={formData.hardDate}
                       onChange={handleChange}
-                      className="border p-2 rounded w-full"
+                      className="border p-2 rounded w-full text-gray-900"
                     />
                     <input
                       type="time"
                       name="hardTime"
                       value={formData.hardTime}
                       onChange={handleChange}
-                      className="border p-2 rounded w-32"
+                      className="border p-2 rounded w-32 text-gray-900"
                     />
                   </div>
                 </div>

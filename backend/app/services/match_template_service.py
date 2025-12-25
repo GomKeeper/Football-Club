@@ -1,5 +1,6 @@
 from typing import List
-from app.models import MatchTemplate, MatchTemplateCreate
+from app.models import MatchTemplate
+from app.schema import MatchTemplateCreate
 from app.repositories.match_template_repository import MatchTemplateRepository
 
 class MatchTemplateService:

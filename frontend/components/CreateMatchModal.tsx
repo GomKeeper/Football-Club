@@ -8,9 +8,10 @@ interface Props {
   templateName: string
   templateId: number
   dayOfWeek: number // 0=Mon, 1=Tue... to help guide the user
+  onSuccess?: () => void
 }
 
-export default function CreateMatchModal({ isOpen, onClose, templateName, templateId, dayOfWeek }: Props) {
+export default function CreateMatchModal({ isOpen, onClose, templateName, templateId, dayOfWeek, onSuccess }: Props) {
   const [date, setDate] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -24,6 +25,11 @@ export default function CreateMatchModal({ isOpen, onClose, templateName, templa
       setLoading(true)
       await generateMatch(templateId, date)
       alert('경기가 성공적으로 생성되었습니다! 🚀')
+
+      if (onSuccess) {
+        onSuccess() 
+      }
+
       onClose()
       // Optional: Refresh the page or redirect to the new match
     } catch (error) {

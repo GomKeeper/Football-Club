@@ -3,7 +3,7 @@ import pytest
 from freezegun import freeze_time
 from datetime import datetime, timedelta, timezone
 from sqlmodel import Session
-from app.models import Match, Club, MatchStatus, ParticipationStatus
+from app.models import MatchBase, Club, MatchStatus, ParticipationStatus
 
 
 # Helper to create a setup
@@ -19,7 +19,7 @@ def setup_match_fixture(session: Session):
     # We set deadlines relative to a fixed point in time we will use in tests
     # Let's assume "Current Time" will be 2025-01-10 12:00:00
     base_time = datetime(2025, 1, 10, 12, 0, 0, tzinfo=timezone.utc)
-    match = Match(
+    match = MatchBase(
         club_id=club.id,
         name="Test Match",
         location="Stadium",

@@ -125,6 +125,8 @@ export interface Match {
   soft_deadline_at: string; // ISO String (UTC)
   hard_deadline_at: string; // ISO String (UTC)
   club_id: number;
+
+  participations?: Participation[];
 }
 
 export async function generateMatch(templateId: number, matchDate: string) {

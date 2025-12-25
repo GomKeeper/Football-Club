@@ -7,7 +7,7 @@ from jose import jwt
 
 from app.main import app
 from app.db import get_session
-from app.models import Member, Club, Match, Participation
+from app.models import Member, Club, MatchBase, Participation
 from app.core.auth import SECRET_KEY, ALGORITHM
 
 # 1. Setup In-Memory Database for Speed & Isolation

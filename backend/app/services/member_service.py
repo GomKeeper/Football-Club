@@ -1,5 +1,6 @@
 from fastapi import HTTPException
-from app.models import Member, MemberUpdate, MemberStatus
+from app.models import Member, MemberStatus
+from app.schema import MemberUpdate
 from app.repositories.member_repository import MemberRepository
 
 class MemberService:

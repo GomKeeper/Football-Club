@@ -2,17 +2,10 @@ from datetime import datetime, timedelta
 from fastapi import HTTPException
 from typing import List
 
-from app.models import (
-    Match,
-    MatchCreateFromTemplate,
-    MatchCreateManual,
-    MatchStatus,
-    MatchUpdate,
-)
+from app.models import Match, MatchStatus
+from app.schema import MatchCreateFromTemplate, MatchCreateManual, MatchUpdate
 from app.repositories.match_template_repository import MatchTemplateRepository
-from app.repositories.match_repository import (
-    MatchRepository,
-)  # We will create this next
+from app.repositories.match_repository import MatchRepository
 
 
 class MatchService:

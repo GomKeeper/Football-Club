@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
-from app.models import Match, MatchCreateFromTemplate, MatchCreateManual, MatchUpdate
+from app.models import Match
+from app.schema import MatchRead, MatchCreateFromTemplate, MatchCreateManual, MatchUpdate
 from app.services.match_service import MatchService
 from app.core.dependencies import get_match_service
 from typing import List
@@ -17,7 +18,7 @@ def generate_match(
     return service.create_match_from_template(data)
 
 
-@router.get("/club/{club_id}", response_model=List[Match])
+@router.get("/club/{club_id}", response_model=List[MatchRead])
 def read_upcoming_matches(
     club_id: int, service: MatchService = Depends(get_match_service)
 ):

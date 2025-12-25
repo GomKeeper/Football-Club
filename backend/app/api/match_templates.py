@@ -1,7 +1,8 @@
 # backend/app/api/match_templates.py
 from typing import List
 from fastapi import APIRouter, Depends
-from app.models import MatchTemplate, MatchTemplateCreate
+from app.models import MatchTemplate
+from app.schema import MatchTemplateCreate
 from app.services.match_template_service import MatchTemplateService
 from app.core.dependencies import get_match_template_service
 
