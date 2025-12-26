@@ -7,8 +7,8 @@ from jose import jwt
 from pydantic import BaseModel
 
 from app.db import get_session
-from app.models import Member
-from app.core.auth import SECRET_KEY, ALGORITHM
+from app.models import Member, Role, MemberStatus
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -28,7 +28,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
 @router.post("/login/kakao", response_model=Token)
@@ -43,8 +43,8 @@ def login_kakao(login_data: KakaoLoginRequest, session: Session = Depends(get_se
             kakao_id=login_data.kakao_id,
             name=login_data.name,
             email=login_data.email,
-            roles=["member"],
-            status="ACTIVE",
+            roles=[Role.VIEWER],
+            status=MemberStatus.PENDING,
         )
         session.add(member)
         session.commit()

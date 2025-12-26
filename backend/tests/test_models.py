@@ -20,7 +20,7 @@ def test_create_member_default_status(session: Session):
 
     assert member.id is not None
     assert member.status == MemberStatus.PENDING # Should fail if default is wrong
-    assert member.roles == ["viewer"]
+    assert member.roles == ["VIEWER"]
 
 def test_create_club_and_membership(session: Session):
     """Test relationship between Club, Member, and Membership"""

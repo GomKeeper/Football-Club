@@ -94,7 +94,7 @@ const login = () => {
             const payload = {
               kakao_id: res.id.toString(),
               name: kakaoAccount.profile?.nickname || 'Unknown',
-              email: kakaoAccount.email || `no-email-${res.id}@example.com`,
+              email: kakaoAccount.email || `no-email-${res.id}@placeholder.com`,
             };
 
             await loginWithBackend(payload);

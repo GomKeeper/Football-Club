@@ -1,15 +1,11 @@
-# backend/app/core/auth.py
-from typing import Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlmodel import Session
 from app.db import get_session
 from app.models import Member
+from app.core.config import settings
 
-# Configuration (Ideally, move these to a config file/env later)
-SECRET_KEY = "CHANGE_THIS_TO_YOUR_SECRET_KEY"  # ⚠️ Make sure this matches your login generation key
-ALGORITHM = "HS256"
 
 # This tells FastAPI where to look for the token (the URL is just for documentation)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -29,7 +25,7 @@ def get_current_member(
     
     try:
         # 1. Decode Token
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         member_id: str = payload.get("sub") # 'sub' usually holds the ID (as string)
         
         if member_id is None:

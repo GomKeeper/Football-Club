@@ -1,5 +1,6 @@
 from typing import List
 from app.models import Notification, NotificationType, NotificationStatus, Match, Member
+from app.schemas import NotificationTestRequest
 from app.repositories.notification_repository import NotificationRepository
 from app.repositories.match_repository import MatchRepository
 from app.repositories.member_repository import MemberRepository
@@ -133,3 +134,21 @@ class NotificationService:
         self.notification_repository.update_status(notification, NotificationStatus.SENT_TO_ADMIN)
         
         return {"status": "success", "message": "Sent to Announcer"}
+
+    async def send_test_notification(self, req: NotificationTestRequest):
+        """
+        Generates the message on the fly and sends it to the admin (me).
+        Does NOT save to the database.
+        """
+        # 1. Fetch Data
+        match = self.match_repository.get_by_id(req.match_id)
+        if not match:
+            raise ValueError("Match not found")
+            
+        all_members = self.member_repository.get_all_by_club_id(match.club_id)
+
+        # 2. Generate Content (Reuse your existing logic)
+        content = self._generate_message_content(match, all_members, req.type)
+
+        # 3. Send via Kakao
+        await self.kakao_service.send_text_to_me(req.kakao_access_token, content)

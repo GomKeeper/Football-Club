@@ -15,7 +15,7 @@ export default function LoginPage() {
       </div>
 
       <button
-        onClick={login} // 👈 Connect the new function
+        onClick={login}
         disabled={loading}
         className="bg-[#FEE500] text-[#000000] px-8 py-4 rounded-xl font-bold text-lg hover:bg-[#FDD835] transition-colors flex items-center gap-2 shadow-sm"
       >

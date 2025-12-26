@@ -134,6 +134,11 @@ export interface MemberProfileUpdatePayload {
   picture_url?: string;  
 }
 
+export interface NotificationPreview {
+  type: string;
+  message: string;
+}
+
 // =============================================================================
 // 3. API FUNCTIONS
 // =============================================================================
@@ -356,4 +361,44 @@ export async function adminOverrideVote(data: AdminVoteUpdate) {
 
   if (!response.ok) throw new Error('Failed to override vote');
   return response.json();
+}
+
+// 1. Preview the Message
+export async function previewNotification(matchId: number, type: 'POLLING_START' | 'SOFT_DEADLINE' | 'HARD_DEADLINE'): Promise<NotificationPreview> {
+  const token = localStorage.getItem('token');
+  const res = await fetch(`${API_URL}/notifications/preview?match_id=${matchId}&type=${type}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`, 
+    }
+  });
+  if (!res.ok) throw new Error('Failed to preview notification');
+  return res.json();
+}
+
+// 2. Send Test Message (To Me)
+// We need the KAKAO ACCESS TOKEN here, not just the App Token.
+export async function sendNotificationToMe(
+  matchId: number,
+  type: 'POLLING_START' | 'SOFT_DEADLINE' | 'HARD_DEADLINE',
+  kakaoAccessToken: string
+) {
+  const token = localStorage.getItem('token');  
+  const res = await fetch(`${API_URL}/notifications/test`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ 
+      match_id: matchId,
+      type: type,
+      kakao_access_token: kakaoAccessToken
+    })
+  });
+  
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || 'Failed to send message');
+  }
+  return res.json();
 }

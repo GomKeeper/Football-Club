@@ -4,7 +4,7 @@ from sqlmodel import SQLModel
 # Import Base Models and Enums
 from app.models import (
     ClubBase, MemberBase, MatchTemplateBase, MatchBase, ParticipationBase,
-    MemberStatus, MembershipStatus, MatchStatus, ParticipationStatus
+    MemberStatus, MembershipStatus, MatchStatus, ParticipationStatus, NotificationType
 )
 
 # -----------------------------------------------------------------------------
@@ -143,4 +143,12 @@ class NotificationSendRequest(SQLModel):
     """
     Request body for sending a notification to the announcer (me).
     """
+    kakao_access_token: str
+
+class NotificationTestRequest(SQLModel):
+    """
+    Payload for sending a TEST message (without saving to DB).
+    """
+    match_id: int
+    type: NotificationType
     kakao_access_token: str

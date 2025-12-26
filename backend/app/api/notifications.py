@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.core.dependencies import get_notification_service
 from app.services.notification_service import NotificationService
 from app.models import NotificationType
-from app.schemas import NotificationSendRequest
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from app.schemas import NotificationSendRequest, NotificationTestRequest
+from fastapi.security import HTTPBearer
 
 security = HTTPBearer()
 
@@ -52,4 +52,18 @@ async def send_notification_to_me(
     except Exception as e:
         # In production, log the actual error for debugging
         print(f"Error sending notification: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/test")
+async def send_test_notification(
+    body: NotificationTestRequest,
+    service: NotificationService = Depends(get_notification_service),
+):
+    """
+    Generates a notification on the fly and sends it to the requester.
+    """
+    try:
+        await service.send_test_notification(body)
+        return {"status": "ok", "message": "Test message sent"}
+    except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
