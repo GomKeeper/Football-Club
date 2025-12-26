@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from app.models import Member, MemberStatus
 from app.schema import MemberUpdate
 from app.repositories.member_repository import MemberRepository
+from app.core.security_fields import encrypt_text
 
 class MemberService:
     def __init__(self, repository: MemberRepository):
@@ -33,6 +34,20 @@ class MemberService:
         for key, value in data_dict.items():
             setattr(member, key, value)
             
+        return self.repository.update(member)
+
+    def update_my_profile(self, member: Member, update_data: MemberUpdate) -> Member:
+        data_dict = update_data.model_dump(exclude_unset=True)
+
+        if "phone" in data_dict:
+            raw_phone = data_dict.pop("phone")
+            # Manually map Schema (phone) -> DB (encrypted_phone)
+            member.encrypted_phone = encrypt_text(raw_phone) if raw_phone else None
+
+        for key, value in data_dict.items():
+            # setattr triggers the @property setter in models.py (e.g., for encryption)
+            setattr(member, key, value)
+
         return self.repository.update(member)
 
     def remove_member(self, member_id: int):

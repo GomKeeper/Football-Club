@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from typing import List
 from app.models import Member
-from app.schema import MemberUpdate
+from app.schema import MemberUpdate, MemberMeRead
 from app.services.member_service import MemberService
 from app.core.dependencies import get_member_service
 from app.core.auth import get_current_active_member
@@ -14,6 +14,14 @@ def read_users_me(current_member: Member = Depends(get_current_active_member)):
     Get current logged-in member's full profile.
     """
     return current_member
+
+@router.patch("/me", response_model=MemberMeRead)
+def update_myself(
+    data: MemberUpdate,
+    service: MemberService = Depends(get_member_service),
+    current_member: Member = Depends(get_current_active_member),
+):
+    return service.update_my_profile(current_member, data)
 
 @router.post("/", response_model=Member)
 def create_member(

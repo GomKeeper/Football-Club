@@ -11,7 +11,7 @@ const getMatchDisplayStatus = (match: Match) => {
   const now = new Date();
   const rawPoll = match.polling_start_at;
   const rawHard = match.hard_deadline_at;
-  
+
   const pollString = rawPoll.endsWith('Z') ? rawPoll : `${rawPoll}Z`;
   const hardString = rawHard.endsWith('Z') ? rawHard : `${rawHard}Z`;
 
@@ -225,7 +225,10 @@ export default function DashboardPage() {
             <span className="block text-2xl mb-1">📊</span>
             <span className="text-sm font-medium text-gray-700">나의 기록</span>
           </button>
-          <button className="bg-white p-4 rounded-xl shadow-sm text-center active:scale-95 transition-transform">
+          <button
+            onClick={() => router.push('/settings')}
+            className="bg-white p-4 rounded-xl shadow-sm text-center active:scale-95 transition-transform"
+          >
             <span className="block text-2xl mb-1">⚙️</span>
             <span className="text-sm font-medium text-gray-700">설정</span>
           </button>

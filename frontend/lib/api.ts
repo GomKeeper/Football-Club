@@ -28,7 +28,11 @@ export interface Member {
   id: number;
   kakao_id: string;
   name: string;
-  avatar_url?: string;
+  picture_url?: string;
+  phone?: string;
+  birth_year?: number;
+  back_number?: number;
+  positions?: string[];
   roles: string[];
   status: 'PENDING' | 'ACTIVE' | 'REJECTED';
 }
@@ -122,6 +126,13 @@ export interface AdminVoteUpdate {
   comment?: string;
 }
 
+export interface MemberProfileUpdatePayload {
+  phone?: string;
+  birth_year?: number;
+  back_number?: number;
+  positions?: string[]; // e.g. ["ST", "CDM"]
+}
+
 // =============================================================================
 // 3. API FUNCTIONS
 // =============================================================================
@@ -196,6 +207,23 @@ export async function syncUserWithBackend(supabaseUser: any) {
     console.error('❌ Sync Error:', error);
     return null;
   }
+}
+
+export async function updateMyProfile(data: MemberProfileUpdatePayload) {
+  const token = localStorage.getItem('token');
+  const response = await fetch(`${API_URL}/members/me`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to update member profile');
+  }
+  return response.json();
 }
 
 // -----------------------------------------------------------------------------

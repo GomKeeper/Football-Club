@@ -53,9 +53,15 @@ class ClubUpdate(SQLModel):
 class MemberUpdate(SQLModel):
     name: Optional[str] = None
     email: Optional[str] = None
+    picture_url: Optional[str] = None
+    
     phone: Optional[str] = None
+    birth_year: Optional[int] = None
+    back_number: Optional[int] = None
+    positions: Optional[List[str]] = None
+
+    # Admin Only (Handled in separate Admin Update if needed, or kept here)    
     roles: Optional[List[str]] = None
-    club_id: Optional[int] = None
     status: Optional[MemberStatus] = None
 
 class MatchUpdate(SQLModel):
@@ -120,3 +126,11 @@ class MemberRead(MemberBase):
     id: int
     created_at: datetime
     updated_at: datetime
+    
+    # 🆕 Computed Properties
+    age_group: str # We send the calculated group string ("1 그룹"), not raw birth year
+
+class MemberMeRead(MemberRead):
+    # Includes private info
+    phone: Optional[str] = None
+    birth_year: Optional[int] = None

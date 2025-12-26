@@ -4,6 +4,7 @@ from sqlmodel import SQLModel, Field, Relationship
 from enum import Enum
 import sqlalchemy as sa
 from sqlalchemy import Column, JSON
+from pydantic import computed_field
 
 # -----------------------------------------------------------------------------
 # 🛠️ SHARED MIXIN (Adds Timestamps to everything)
@@ -24,7 +25,9 @@ class TimestampMixin(SQLModel):
         }
     )
 
-# --- Enums ---
+# -----------------------------------------------------------------------------
+# 🆕 ENUMS & CONSTANTS
+# -----------------------------------------------------------------------------
 class Role(str, Enum):
     VIEWER = "VIEWER"
     EDITOR = "EDITOR"
@@ -57,6 +60,28 @@ class MatchStatus(str, Enum):
     CANCELLED = "CANCELLED"
     FINISHED = "FINISHED"
 
+class PlayerPosition(str, Enum):
+    # Forward
+    ST = "ST"   # Striker
+    SS = "SS"   # Second Striker
+    FS = "FS"   # False Striker
+    RW = "RW"   # Right Wing
+    LW = "LW"   # Left Wing
+    # Midfield
+    CAM = "CAM" # Attacking Midfielder
+    CM = "CM"   # Central Midfielder
+    CDM = "CDM" # Defensive Midfielder
+    RM = "RM"   # Right Midfielder
+    LM = "LM"   # Left Midfielder
+    # Defense
+    CB = "CB"   # Center Back
+    RB = "RB"   # Right Back
+    LB = "LB"   # Left Back
+    LWB = "LWB" # Left Wing Back
+    RWB = "RWB" # Right Wing Back
+    # Goalkeeper
+    GK = "GK"
+
 # -----------------------------------------------------------------------------
 # 🏢 CLUB
 # -----------------------------------------------------------------------------
@@ -79,9 +104,17 @@ class Club(ClubBase, TimestampMixin, table=True):
 class MemberBase(SQLModel):
     name: str
     email: Optional[str] = None
-    phone: Optional[str] = None
+    picture_url: Optional[str] = None
     status: MemberStatus = Field(default=MemberStatus.PENDING)
     # Roles as JSON
+    
+    back_number: Optional[int] = None
+    birth_year: Optional[int] = None
+
+    # Store positions as a JSON list (e.g. ["LB", "CB"])
+    positions: List[str] = Field(default=[], sa_column=Column(JSON))
+    
+    #Roles
     roles: List[str] = Field(default=["VIEWER"], sa_column=Column(JSON))
 
 class Member(MemberBase, TimestampMixin, table=True):
@@ -89,10 +122,44 @@ class Member(MemberBase, TimestampMixin, table=True):
     kakao_id: str = Field(index=True, unique=True) # Auth ID (Internal)
     club_id: Optional[int] = Field(default=None, foreign_key="club.id")
 
+    # 🔐 Encrypted Phone Number (Stored as random-looking string)
+    encrypted_phone: Optional[str] = Field(default=None)
+
     # Relationships
     club: Optional[Club] = Relationship(back_populates="members")
     memberships: List["Membership"] = Relationship(back_populates="member")
     participations: List["Participation"] = Relationship(back_populates="member")
+
+    # 1. Phone Getter/Setter (Handles Encryption Automatically)
+    @computed_field
+    @property
+    def phone(self) -> Optional[str]:
+        from app.core.security_fields import decrypt_text
+        if self.encrypted_phone:
+            return decrypt_text(self.encrypted_phone)
+        return None
+
+    @phone.setter
+    def phone(self, value: str):
+        from app.core.security_fields import encrypt_text
+        if value:
+            self.encrypted_phone = encrypt_text(value)
+        else:
+            self.encrypted_phone = None
+
+    # 2. Age Group Calculator
+    @computed_field
+    @property
+    def age_group(self) -> str:
+        if not self.birth_year:
+            return "미입력"
+        
+        age = datetime.now().year - self.birth_year
+        
+        if age < 50:
+            return "1 그룹 (20대~40대)"
+        else:
+            return "2 그룹 (50대+)"
 
 # -----------------------------------------------------------------------------
 # 🎫 MEMBERSHIP
