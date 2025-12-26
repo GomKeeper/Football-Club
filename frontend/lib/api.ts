@@ -64,7 +64,7 @@ export interface Participation {
   member?: {
     id: number;
     name: string;
-    avatar_url?: string;
+    picture_url?: string;
   };
 }
 
@@ -131,6 +131,7 @@ export interface MemberProfileUpdatePayload {
   birth_year?: number;
   back_number?: number;
   positions?: string[]; // e.g. ["ST", "CDM"]
+  picture_url?: string;  
 }
 
 // =============================================================================
@@ -180,7 +181,7 @@ export async function syncUserWithBackend(supabaseUser: any) {
   const payload = {
     kakao_id: String(kakaoId),
     name: user_metadata.full_name || user_metadata.name || 'Unknown Player',
-    avatar_url: user_metadata.avatar_url || '',
+    picture_url: user_metadata.picture_url || '',
     email: user_metadata.email || `no-email-${kakaoId}@placeholder.com`,
     roles: ['VIEWER'],
     status: 'PENDING',

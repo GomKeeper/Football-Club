@@ -153,7 +153,7 @@ export default function DashboardPage() {
         {/* 1. Welcome Card */}
         <div className="bg-white p-6 rounded-2xl shadow-sm flex items-center gap-4">
           <img
-            src={member.avatar_url || 'https://placehold.co/100'}
+            src={member.picture_url || 'https://placehold.co/100'}
             alt="Profile"
             className="w-16 h-16 rounded-full border-2 border-gray-100"
           />

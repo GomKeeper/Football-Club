@@ -99,7 +99,7 @@ class ParticipationAdminUpdate(SQLModel):
 class MemberSummary(SQLModel):
     id: int
     name: str
-    avatar_url: Optional[str] = None
+    picture_url: Optional[str] = None
 
 # 2. Participation Read (Nested inside Match)
 class ParticipationRead(ParticipationBase):
