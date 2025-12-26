@@ -19,7 +19,7 @@ from app.services.match_template_service import MatchTemplateService
 from app.services.match_service import MatchService
 from app.services.participation_service import ParticipationService
 from app.services.notification_service import NotificationService
-
+from app.services.kakao_service import KakaoService
 
 # --- Members ---
 def get_member_repository(session: Session = Depends(get_session)) -> MemberRepository:
@@ -98,6 +98,10 @@ def get_participation_service(
 ) -> ParticipationService:
     return ParticipationService(participation_repository, match_repository)
 
+# --- Kakao ---
+def get_kakao_service() -> KakaoService:
+    return KakaoService()
+
 # --- Notifications ---
 def get_notification_repository(session: Session = Depends(get_session)) -> NotificationRepository:
     return NotificationRepository(session)
@@ -106,6 +110,7 @@ def get_notification_repository(session: Session = Depends(get_session)) -> Noti
 def get_notification_service(
     notification_repository: NotificationRepository = Depends(get_notification_repository),
     match_repository: MatchRepository = Depends(get_match_repository),
-    member_repository: MemberRepository = Depends(get_member_repository)
+    member_repository: MemberRepository = Depends(get_member_repository),
+    kakao_service: KakaoService = Depends(get_kakao_service)
 ) -> NotificationService:
-    return NotificationService(notification_repository, match_repository, member_repository)
+    return NotificationService(notification_repository, match_repository, member_repository, kakao_service)

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from typing import List
 from app.models import Club
-from app.schema import ClubUpdate
+from app.schemas import ClubUpdate
 from app.services.club_service import ClubService
 from app.core.dependencies import get_club_service
 

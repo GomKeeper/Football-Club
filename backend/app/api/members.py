@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from typing import List
 from app.models import Member
-from app.schema import MemberUpdate, MemberMeRead
+from app.schemas import MemberUpdate, MemberMeRead
 from app.services.member_service import MemberService
 from app.core.dependencies import get_member_service
 from app.core.auth import get_current_active_member

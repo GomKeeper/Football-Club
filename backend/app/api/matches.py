@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from app.models import Match
-from app.schema import MatchRead, MatchCreateFromTemplate, MatchCreateManual, MatchUpdate
+from app.schemas import MatchRead, MatchCreateFromTemplate, MatchCreateManual, MatchUpdate
 from app.services.match_service import MatchService
 from app.core.dependencies import get_match_service
 from typing import List

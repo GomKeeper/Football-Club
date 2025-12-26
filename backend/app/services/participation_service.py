@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from fastapi import HTTPException
 from app.models import Participation, ParticipationStatus
-from app.schema import ParticipationAdminUpdate
+from app.schemas import ParticipationAdminUpdate
 from app.repositories.participation_repository import ParticipationRepository
 from app.repositories.match_repository import MatchRepository
 

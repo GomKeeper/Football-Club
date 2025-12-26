@@ -16,6 +16,9 @@ class NotificationRepository:
         statement = select(Notification).where(Notification.match_id == match_id)
         return self.session.exec(statement).all()
 
+    def get_by_id(self, notification_id: int) -> Optional[Notification]:
+        return self.session.get(Notification, notification_id)
+
     def update_status(self, notification: Notification, status: NotificationStatus) -> Notification:
         notification.status = status
         self.session.add(notification)

@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from app.models import Member, MemberStatus
-from app.schema import MemberUpdate
+from app.schemas import MemberUpdate
 from app.repositories.member_repository import MemberRepository
 from app.core.security_fields import encrypt_text
 

@@ -134,3 +134,13 @@ class MemberMeRead(MemberRead):
     # Includes private info
     phone: Optional[str] = None
     birth_year: Optional[int] = None
+
+# -----------------------------------------------------------------------------
+# 🔔 NOTIFICATION SCHEMAS
+# -----------------------------------------------------------------------------
+
+class NotificationSendRequest(SQLModel):
+    """
+    Request body for sending a notification to the announcer (me).
+    """
+    kakao_access_token: str

@@ -4,7 +4,7 @@ from app.services.participation_service import ParticipationService
 from app.core.dependencies import get_participation_service
 from app.core.auth import get_current_active_member  # We need to know WHO is voting
 from app.models import Member
-from app.schema import ParticipationAdminUpdate, ParticipationRead
+from app.schemas import ParticipationAdminUpdate, ParticipationRead
 from sqlmodel import SQLModel
 from typing import Optional, List
 

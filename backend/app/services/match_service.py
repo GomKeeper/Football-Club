@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from typing import List
 
 from app.models import Match, MatchStatus
-from app.schema import MatchCreateFromTemplate, MatchCreateManual, MatchUpdate
+from app.schemas import MatchCreateFromTemplate, MatchCreateManual, MatchUpdate
 from app.repositories.match_template_repository import MatchTemplateRepository
 from app.repositories.match_repository import MatchRepository
 
