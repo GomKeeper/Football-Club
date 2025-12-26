@@ -152,3 +152,16 @@ class NotificationTestRequest(SQLModel):
     match_id: int
     type: NotificationType
     kakao_access_token: str
+
+# -----------------------------------------------------------------------------
+# 🔐 AUTH SCHEMAS
+# -----------------------------------------------------------------------------
+
+class KakaoLoginRequest(SQLModel):
+    kakao_id: str
+    name: str
+    email: str
+
+class Token(SQLModel):
+    access_token: str
+    token_type: str

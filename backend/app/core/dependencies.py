@@ -20,6 +20,8 @@ from app.services.match_service import MatchService
 from app.services.participation_service import ParticipationService
 from app.services.notification_service import NotificationService
 from app.services.kakao_service import KakaoService
+from app.services.auth_service import AuthService
+
 
 # --- Members ---
 def get_member_repository(session: Session = Depends(get_session)) -> MemberRepository:
@@ -30,6 +32,13 @@ def get_member_service(
     repo: MemberRepository = Depends(get_member_repository),
 ) -> MemberService:
     return MemberService(repo)
+
+
+# --- Auth ---
+def get_auth_service(
+    member_repository: MemberRepository = Depends(get_member_repository),
+) -> AuthService:
+    return AuthService(member_repository)
 
 
 # --- Clubs ---
@@ -98,19 +107,28 @@ def get_participation_service(
 ) -> ParticipationService:
     return ParticipationService(participation_repository, match_repository)
 
+
 # --- Kakao ---
 def get_kakao_service() -> KakaoService:
     return KakaoService()
 
+
 # --- Notifications ---
-def get_notification_repository(session: Session = Depends(get_session)) -> NotificationRepository:
+def get_notification_repository(
+    session: Session = Depends(get_session),
+) -> NotificationRepository:
     return NotificationRepository(session)
+
 
 # We reuse existing repo getters if you have them, otherwise create new instances
 def get_notification_service(
-    notification_repository: NotificationRepository = Depends(get_notification_repository),
+    notification_repository: NotificationRepository = Depends(
+        get_notification_repository
+    ),
     match_repository: MatchRepository = Depends(get_match_repository),
     member_repository: MemberRepository = Depends(get_member_repository),
-    kakao_service: KakaoService = Depends(get_kakao_service)
+    kakao_service: KakaoService = Depends(get_kakao_service),
 ) -> NotificationService:
-    return NotificationService(notification_repository, match_repository, member_repository, kakao_service)
+    return NotificationService(
+        notification_repository, match_repository, member_repository, kakao_service
+    )
