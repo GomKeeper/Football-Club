@@ -152,7 +152,7 @@ export default function SettingsPage() {
             placeholder="010-1234-5678"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-lg focus:ring-2 focus:ring-black outline-none"
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-lg focus:ring-2 focus:ring-black outline-none text-gray-900"
           />
           <p className="text-xs text-gray-400 mt-2">
             * 운영진에게만 공개되며 안전하게 암호화되어 저장됩니다.
@@ -165,10 +165,10 @@ export default function SettingsPage() {
             <label className="block text-sm font-bold text-gray-900 mb-2">🎂 출생년도</label>
             <input
               type="number"
-              placeholder="1990"
+              placeholder="2000"
               value={birthYear}
               onChange={(e) => setBirthYear(e.target.value)}
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-lg focus:ring-2 focus:ring-black outline-none"
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-lg focus:ring-2 focus:ring-black outline-none text-gray-900"
             />
             <p className="text-xs text-gray-400 mt-1">연령대 그룹 (청년부/장년부 등) 자동 분류용</p>
           </div>
@@ -182,7 +182,7 @@ export default function SettingsPage() {
               placeholder="7"
               value={backNumber}
               onChange={(e) => setBackNumber(e.target.value)}
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-lg focus:ring-2 focus:ring-black outline-none"
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-lg focus:ring-2 focus:ring-black outline-none text-gray-900"
             />
           </div>
         </section>
