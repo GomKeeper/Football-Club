@@ -22,6 +22,10 @@ class MemberRepository:
     def get_all(self) -> List[Member]:
         return self.session.exec(select(Member)).all()
 
+    def get_all_by_club_id(self, club_id: int) -> List[Member]:
+        statement = select(Member).where(Member.club_id == club_id)
+        return self.session.exec(statement).all()
+
     def update(self, member: Member) -> Member:
         self.session.add(member)
         self.session.commit()

@@ -9,6 +9,7 @@ from app.repositories.membership_repository import MembershipRepository
 from app.repositories.match_template_repository import MatchTemplateRepository
 from app.repositories.match_repository import MatchRepository
 from app.repositories.participation_repository import ParticipationRepository
+from app.repositories.notification_repository import NotificationRepository
 
 # Services
 from app.services.member_service import MemberService
@@ -17,6 +18,7 @@ from app.services.membership_service import MembershipService
 from app.services.match_template_service import MatchTemplateService
 from app.services.match_service import MatchService
 from app.services.participation_service import ParticipationService
+from app.services.notification_service import NotificationService
 
 
 # --- Members ---
@@ -95,3 +97,15 @@ def get_participation_service(
     match_repository: MatchRepository = Depends(get_match_repository),
 ) -> ParticipationService:
     return ParticipationService(participation_repository, match_repository)
+
+# --- Notifications ---
+def get_notification_repository(session: Session = Depends(get_session)) -> NotificationRepository:
+    return NotificationRepository(session)
+
+# We reuse existing repo getters if you have them, otherwise create new instances
+def get_notification_service(
+    notification_repository: NotificationRepository = Depends(get_notification_repository),
+    match_repository: MatchRepository = Depends(get_match_repository),
+    member_repository: MemberRepository = Depends(get_member_repository)
+) -> NotificationService:
+    return NotificationService(notification_repository, match_repository, member_repository)

@@ -3,7 +3,7 @@ from datetime import datetime, time, timezone
 from sqlmodel import SQLModel, Field, Relationship
 from enum import Enum
 import sqlalchemy as sa
-from sqlalchemy import Column, JSON
+from sqlalchemy import Column, JSON, Text
 from pydantic import computed_field
 
 # -----------------------------------------------------------------------------
@@ -38,11 +38,6 @@ class ParticipationStatus(str, Enum):
     ATTENDING = "ATTENDING"
     ABSENT = "ABSENT"
     PENDING = "PENDING"
-
-class NotificationType(str, Enum):
-    INITIAL_POLLING = "INITIAL_POLLING"
-    SOFT_DEADLINE = "SOFT_DEADLINE"
-    HARD_DEADLINE = "HARD_DEADLINE"
 
 class MemberStatus(str, Enum):
     PENDING = "PENDING"
@@ -81,6 +76,18 @@ class PlayerPosition(str, Enum):
     RWB = "RWB" # Right Wing Back
     # Goalkeeper
     GK = "GK"
+
+class NotificationType(str, Enum):
+    POLLING_START = "POLLING_START" # 🆕 "Voting is OPEN!"
+    SOFT_DEADLINE = "SOFT_DEADLINE" # "Please vote!"
+    HARD_DEADLINE = "HARD_DEADLINE" # "Finalizing now."
+    MANUAL = "MANUAL"               # Custom alerts
+
+class NotificationStatus(str, Enum):
+    PENDING = "PENDING"             # Generated, waiting for Manager to see
+    SENT_TO_ADMIN = "SENT_TO_ADMIN" # Pushed to Manager's Kakao
+    PUBLISHED = "PUBLISHED"         # Manager confirmed & sent to Group Chat
+
 
 # -----------------------------------------------------------------------------
 # 🏢 CLUB
@@ -231,6 +238,7 @@ class Match(MatchBase, TimestampMixin, table=True):
     # Relationships
     club: Optional["Club"] = Relationship(back_populates="matches")
     participations: List["Participation"] = Relationship(back_populates="match")
+    notifications: List["Notification"] = Relationship(back_populates="match")
 
 # -----------------------------------------------------------------------------
 # 🙋 PARTICIPATION
@@ -249,12 +257,21 @@ class Participation(ParticipationBase, TimestampMixin, table=True):
     match: "Match" = Relationship(back_populates="participations")
 
 # -----------------------------------------------------------------------------
-# 🔔 NOTIFICATION LOG
+# 🔔 NOTIFICATION
 # -----------------------------------------------------------------------------
-class NotificationLog(TimestampMixin, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    match_id: int = Field(foreign_key="match.id")
-    sent_by_member_id: Optional[int] = Field(foreign_key="member.id")
+
+class NotificationBase(SQLModel):
     type: NotificationType
-    scheduled_at: datetime
-    sent_at: Optional[datetime] = None
+    status: NotificationStatus = Field(default=NotificationStatus.PENDING)
+    content: str = Field(sa_column=Column(Text)) # Snapshot of the message
+    
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    sent_at: Optional[datetime] = None 
+    
+    match_id: int = Field(foreign_key="match.id")
+
+class Notification(NotificationBase, TimestampMixin, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+
+    # Relationships
+    match: "Match" = Relationship(back_populates="notifications")

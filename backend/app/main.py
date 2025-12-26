@@ -14,6 +14,7 @@ from app.api import (
     matches,
     participations,
     auth,
+    notifications,
 )
 
 
@@ -79,3 +80,4 @@ app.include_router(memberships.router, prefix="/memberships", tags=["memberships
 app.include_router(match_templates.router, prefix="/match-templates", tags=["match-templates"])
 app.include_router(matches.router, prefix="/matches", tags=["matches"])
 app.include_router(participations.router, prefix="/participations", tags=["participations"])
+app.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
