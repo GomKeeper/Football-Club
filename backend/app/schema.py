@@ -1,9 +1,9 @@
 from typing import List, Optional
-from datetime import datetime, date, time
+from datetime import datetime, date
 from sqlmodel import SQLModel
 # Import Base Models and Enums
 from app.models import (
-    ClubBase, MemberBase, MembershipBase, MatchTemplateBase, MatchBase, ParticipationBase,
+    ClubBase, MemberBase, MatchTemplateBase, MatchBase, ParticipationBase,
     MemberStatus, MembershipStatus, MatchStatus, ParticipationStatus
 )
 
@@ -78,6 +78,12 @@ class MembershipUpdate(SQLModel):
     year: Optional[int] = None
     started_at: Optional[datetime] = None
     ended_at: Optional[datetime] = None
+
+class ParticipationAdminUpdate(SQLModel):
+    match_id: int
+    member_id: int
+    status: ParticipationStatus
+    comment: Optional[str] = None
 
 # -----------------------------------------------------------------------------
 # 🔵 READ SCHEMAS (Output)

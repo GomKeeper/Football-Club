@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from fastapi import HTTPException
 from app.models import Participation, ParticipationStatus
+from app.schema import ParticipationAdminUpdate
 from app.repositories.participation_repository import ParticipationRepository
 from app.repositories.match_repository import MatchRepository
 
@@ -82,3 +83,26 @@ class ParticipationService:
 
     def list_member_participations(self, member_id: int) -> Sequence[Participation]:
         return self.participation_repository.get_by_member_id(member_id)
+
+    def admin_override_vote(self, data: ParticipationAdminUpdate) -> Participation:
+        # 1. Try to find existing vote using Repo
+        participation = self.participation_repository.get_by_match_id_and_member_id(
+            data.match_id, data.member_id
+        )
+
+        if participation:
+            # 2. Update existing
+            participation.status = data.status
+            if data.comment is not None:
+                participation.comment = data.comment
+        else:
+            # 3. Create new instance
+            participation = Participation(
+                match_id=data.match_id,
+                member_id=data.member_id,
+                status=data.status,
+                comment=data.comment
+            )
+
+        # 4. Save using Repo (Handling session.add/commit/refresh internally)
+        return self.participation_repository.save(participation)
