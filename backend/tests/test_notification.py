@@ -1,9 +1,10 @@
 from app.models import NotificationType, Match, MatchStatus
 from datetime import timedelta
 from app.services.notification_service import NotificationService
-from app.repositories.member_repository import MemberRepository
+from app.repositories.membership_repository import MembershipRepository
 from app.repositories.match_repository import MatchRepository
 from app.repositories.notification_repository import NotificationRepository
+from app.repositories.participation_repository import ParticipationRepository
 
 def test_identify_ghosts(session, test_club, current_season, active_membership, test_user):
     """
@@ -36,7 +37,8 @@ def test_identify_ghosts(session, test_club, current_season, active_membership, 
     service = NotificationService(
         NotificationRepository(session),
         MatchRepository(session),
-        MemberRepository(session),
+        MembershipRepository(session),
+        ParticipationRepository(session),
         MockKakao()
     )
 
@@ -44,15 +46,15 @@ def test_identify_ghosts(session, test_club, current_season, active_membership, 
     # We want to see if 'test_user' is listed as a Ghost (because they haven't voted)
     
     # 1. Fetch Target Audience (Should include test_user)
-    #targets = service._get_target_audience(match)
-    #assert test_user in targets
+    targets = service._get_match_stats(match)
+    assert test_user.name in targets["GHOST"]
 
     # 2. Check Vote Status (Should be None/Pending)
     # Since test_user hasn't voted in 'participation' table, they are a Ghost.
     # (This logic is usually inside _generate_message_content, verified by checking text output)
     
-    content = service._generate_message_content(match, [], NotificationType.HARD_DEADLINE)
+    content = service._generate_message_content(match, NotificationType.HARD_DEADLINE)
     
     # The message should contain the user's name under "Ghosts" or "Non-voters"
-    assert test_user.name not in content
-    assert "투표 마감" in content # or whatever your ghost header is
+    assert test_user.name in content
+    assert "참석 체크 최종 마감" in content # or whatever your ghost header is

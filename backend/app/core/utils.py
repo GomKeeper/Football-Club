@@ -1,0 +1,3 @@
+
+# Korean Day of Week Map
+KR_WEEKDAYS = ["월", "화", "수", "목", "금", "토", "일"]

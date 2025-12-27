@@ -139,9 +139,10 @@ def get_notification_service(
         get_notification_repository
     ),
     match_repository: MatchRepository = Depends(get_match_repository),
-    member_repository: MemberRepository = Depends(get_member_repository),
+    membership_repository: MembershipRepository = Depends(get_membership_repository),
+    participation_repository: ParticipationRepository = Depends(get_participation_repository),
     kakao_service: KakaoService = Depends(get_kakao_service),
 ) -> NotificationService:
     return NotificationService(
-        notification_repository, match_repository, member_repository, kakao_service
+        notification_repository, match_repository, membership_repository, participation_repository, kakao_service
     )

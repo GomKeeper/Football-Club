@@ -1,6 +1,7 @@
 from sqlmodel import Session, select
 from typing import List, Optional
 from app.models import Membership, MembershipStatus
+from sqlalchemy.orm import joinedload
 
 class MembershipRepository:
     def __init__(self, session: Session):
@@ -25,6 +26,15 @@ class MembershipRepository:
 
     def get_all(self) -> List[Membership]:
         return self.session.exec(select(Membership)).all()
+
+    def get_all_by_season(self, season_id: int) -> List[Membership]:
+        """Get all ACTIVE memberships for a season, with Member data loaded."""
+        statement = select(Membership).where(
+            Membership.season_id == season_id,
+            Membership.status == "ACTIVE"
+        ).options(joinedload(Membership.member))
+        
+        return self.session.exec(statement).all()
 
     def update(self, membership: Membership) -> Membership:
         self.session.add(membership)
