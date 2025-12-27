@@ -10,6 +10,7 @@ from app.repositories.match_template_repository import MatchTemplateRepository
 from app.repositories.match_repository import MatchRepository
 from app.repositories.participation_repository import ParticipationRepository
 from app.repositories.notification_repository import NotificationRepository
+from app.repositories.season_repository import SeasonRepository
 
 # Services
 from app.services.member_service import MemberService
@@ -21,6 +22,7 @@ from app.services.participation_service import ParticipationService
 from app.services.notification_service import NotificationService
 from app.services.kakao_service import KakaoService
 from app.services.auth_service import AuthService
+from app.services.season_service import SeasonService
 
 
 # --- Members ---
@@ -51,6 +53,14 @@ def get_club_service(
 ) -> ClubService:
     return ClubService(repo)
 
+# --- Seasons ---
+def get_season_repository(session: Session = Depends(get_session)) -> SeasonRepository:
+    return SeasonRepository(session)
+
+def get_season_service(
+    repo: SeasonRepository = Depends(get_season_repository),
+) -> SeasonService:
+    return SeasonService(repo)
 
 # --- Memberships ---
 def get_membership_repository(
@@ -61,8 +71,9 @@ def get_membership_repository(
 
 def get_membership_service(
     repo: MembershipRepository = Depends(get_membership_repository),
+    season_repository: SeasonRepository = Depends(get_season_repository),
 ) -> MembershipService:
-    return MembershipService(repo)
+    return MembershipService(repo, season_repository)
 
 
 # --- Match Templates ---
@@ -88,8 +99,9 @@ def get_match_service(
     template_repository: MatchTemplateRepository = Depends(
         get_match_template_repository
     ),
+    season_repository: SeasonRepository = Depends(get_season_repository),
 ) -> MatchService:
-    return MatchService(repository, template_repository)
+    return MatchService(repository, template_repository, season_repository)
 
 
 # --- Participations ---
@@ -104,8 +116,9 @@ def get_participation_service(
         get_participation_repository
     ),
     match_repository: MatchRepository = Depends(get_match_repository),
+    membership_repository: MembershipRepository = Depends(get_membership_repository),
 ) -> ParticipationService:
-    return ParticipationService(participation_repository, match_repository)
+    return ParticipationService(participation_repository, match_repository, membership_repository)
 
 
 # --- Kakao ---

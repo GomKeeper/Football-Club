@@ -1,6 +1,6 @@
 from sqlmodel import Session, select
 from typing import List, Optional
-from app.models import Membership
+from app.models import Membership, MembershipStatus
 
 class MembershipRepository:
     def __init__(self, session: Session):
@@ -15,14 +15,13 @@ class MembershipRepository:
     def get_by_id(self, membership_id: int) -> Optional[Membership]:
         return self.session.get(Membership, membership_id)
 
-    def get_by_year_and_member(self, member_id: int, club_id: int, year: int) -> Optional[Membership]:
-        """Custom query to find existing membership for a specific year"""
+    def has_active_membership(self, member_id: int, season_id: int) -> bool:
         statement = select(Membership).where(
             Membership.member_id == member_id,
-            Membership.club_id == club_id,
-            Membership.year == year
+            Membership.season_id == season_id,
+            Membership.status == MembershipStatus.ACTIVE
         )
-        return self.session.exec(statement).first()
+        return self.session.exec(statement).first() is not None
 
     def get_all(self) -> List[Membership]:
         return self.session.exec(select(Membership)).all()

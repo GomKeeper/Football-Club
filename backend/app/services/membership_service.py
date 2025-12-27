@@ -1,31 +1,44 @@
 from fastapi import HTTPException
 from typing import List
-from app.models import Membership, MembershipStatus
+from app.models import Membership, MembershipType
+from datetime import datetime, timedelta, UTC
 from app.schemas import MembershipUpdate
 from app.repositories.membership_repository import MembershipRepository
+from app.repositories.season_repository import SeasonRepository
 
 class MembershipService:
-    def __init__(self, repository: MembershipRepository):
+    def __init__(self, repository: MembershipRepository, season_repository: SeasonRepository):
         self.repository = repository
+        self.season_repository = season_repository
 
-    def create_membership(self, membership_data: Membership) -> Membership:
-        # BUSINESS LOGIC: Enforce one membership per year per club
-        existing = self.repository.get_by_year_and_member(
-            member_id=membership_data.member_id,
-            club_id=membership_data.club_id,
-            year=membership_data.year
+    def create_membership(self, member_id: int, season_id: int, type: MembershipType, club_id: int) -> Membership:
+        season = self.season_repository.get_by_id(season_id)
+        if not season:
+            raise ValueError("Invalid Season")
+
+        # 🧠 Smart Expiration Logic
+        if type == MembershipType.REGULAR:
+            # Regular members expire when the season ends
+            expires_at = season.ended_at
+        elif type == MembershipType.ON_TRIAL:
+            # Trials expire in 30 days (example default)
+            expires_at = datetime.now(UTC) + timedelta(days=30)
+            # But cap it at season end
+            if expires_at > season.ended_at:
+                expires_at = season.ended_at
+        else: # GUEST
+            # Guests might expire in 7 days
+            expires_at = datetime.now(UTC) + timedelta(days=7)
+
+        membership = Membership(
+            member_id=member_id,
+            club_id=club_id,
+            season_id=season_id,
+            type=type,
+            status="PENDING",
+            expires_at=expires_at
         )
-        if existing:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Member already has a membership for {membership_data.year}"
-            )
-
-        # Default to PENDING if not specified
-        if not membership_data.status:
-            membership_data.status = MembershipStatus.PENDING
-            
-        return self.repository.create(membership_data)
+        return self.repository.create(membership)
 
     def get_membership(self, membership_id: int) -> Membership:
         membership = self.repository.get_by_id(membership_id)

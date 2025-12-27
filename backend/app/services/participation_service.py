@@ -4,6 +4,7 @@ from app.models import Participation, ParticipationStatus
 from app.schemas import ParticipationAdminUpdate
 from app.repositories.participation_repository import ParticipationRepository
 from app.repositories.match_repository import MatchRepository
+from app.repositories.membership_repository import MembershipRepository
 
 from typing import Optional, Sequence
 
@@ -13,9 +14,11 @@ class ParticipationService:
         self,
         participation_repository: ParticipationRepository,
         match_repository: MatchRepository,
+        membership_repository: MembershipRepository,
     ):
         self.participation_repository = participation_repository
         self.match_repository = match_repository
+        self.membership_repository = membership_repository
 
     def vote(
         self,
@@ -28,6 +31,29 @@ class ParticipationService:
         match = self.match_repository.get_by_id(match_id)
         if not match:
             raise HTTPException(status_code=404, detail="Match not found")
+
+        # --------------------------------------------------------- 
+        # 🛡️ GATEKEEPER LOGIC (The Fix)
+        # ---------------------------------------------------------
+        
+        # A. Allow Guests / Trials to bypass (if your rules allow it)
+        # (Assuming you use Member.roles or Member.status for this distinction)
+        is_guest_or_trial = False 
+        # Example check (adjust based on your exact Role/Status enums):
+        # if member.status == MemberStatus.TRIAL: is_guest_or_trial = True
+        
+        if not is_guest_or_trial:
+            # B. Strict Check for Regular Members
+            has_membership = self.membership_repository.has_active_membership(
+                member_id=member_id,
+                season_id=match.season_id
+            )
+
+            if not has_membership:
+                raise HTTPException(
+                    status_code=403,
+                    detail="❌ 유효한 시즌권 내역이 없습니다. 운영진에게 문의 부탁 드립니다"
+                )
 
         # 2. Check Deadlines
         now = datetime.now(timezone.utc)

@@ -25,6 +25,7 @@ class MatchTemplateCreate(MatchTemplateBase):
 class MatchCreateFromTemplate(SQLModel):
     template_id: int
     match_date: date
+    season_id: Optional[int] = None
 
 class MatchCreateManual(SQLModel):
     club_id: int
@@ -165,3 +166,29 @@ class KakaoLoginRequest(SQLModel):
 class Token(SQLModel):
     access_token: str
     token_type: str
+
+# -----------------------------------------------------------------------------
+# 🍂 SEASON SCHEMAS
+# -----------------------------------------------------------------------------
+
+class SeasonCreate(SQLModel):
+    name: str
+    started_at: datetime
+    ended_at: datetime
+    is_active: bool = True
+
+class SeasonUpdate(SQLModel):
+    name: Optional[str] = None
+    started_at: Optional[datetime] = None
+    ended_at: Optional[datetime] = None
+    is_active: Optional[bool] = None
+
+class SeasonResponse(SQLModel):
+    id: int
+    club_id: int
+    name: str
+    started_at: datetime
+    ended_at: datetime
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime

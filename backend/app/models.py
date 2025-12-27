@@ -47,7 +47,12 @@ class MemberStatus(str, Enum):
 class MembershipStatus(str, Enum):
     PENDING = "PENDING"
     ACTIVE = "ACTIVE"
-    SUSPENDED = "SUSPENDED"
+    EXPIRED = "EXPIRED"
+
+class MembershipType(str, Enum):
+    REGULAR = "REGULAR"   # Standard Season Member (Expires at Season End)
+    ON_TRIAL = "ON_TRIAL" # Short-term (e.g., 1 month)
+    GUEST = "GUEST"       # Very short-term (e.g., 1 day or 1 week)
 
 class MatchStatus(str, Enum):
     RECRUITING = "RECRUITING"
@@ -101,6 +106,7 @@ class Club(ClubBase, TimestampMixin, table=True):
     
     # Relationships
     members: List["Member"] = Relationship(back_populates="club")
+    seasons: List["Season"] = Relationship(back_populates="club")
     memberships: List["Membership"] = Relationship(back_populates="club")
     match_templates: List["MatchTemplate"] = Relationship(back_populates="club")
     matches: List["Match"] = Relationship(back_populates="club")
@@ -169,23 +175,46 @@ class Member(MemberBase, TimestampMixin, table=True):
             return "2 그룹 (50대+)"
 
 # -----------------------------------------------------------------------------
+# 🍂 SEASON
+# -----------------------------------------------------------------------------
+class SeasonBase(SQLModel):
+    name: str = Field(index=True)
+    
+    started_at: datetime 
+    ended_at: datetime
+    
+    is_active: bool = Field(default=True)
+
+class Season(SeasonBase, TimestampMixin, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    club_id: int = Field(foreign_key="club.id")
+    
+    # Relationships
+    club: "Club" = Relationship(back_populates="seasons")
+    matches: List["Match"] = Relationship(back_populates="season")
+    memberships: List["Membership"] = Relationship(back_populates="season")
+
+# -----------------------------------------------------------------------------
 # 🎫 MEMBERSHIP
 # -----------------------------------------------------------------------------
 class MembershipBase(SQLModel):
-    year: int = Field(index=True)
     status: MembershipStatus = Field(default=MembershipStatus.PENDING)
-    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    ended_at: Optional[datetime] = Field(default=None)
+    type: MembershipType = Field(default=MembershipType.REGULAR)
+    
+    joined_at: datetime = Field(default_factory=datetime.utcnow)
+    expires_at: Optional[datetime] = Field(default=None)
 
 class Membership(MembershipBase, TimestampMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     member_id: int = Field(foreign_key="member.id")
     club_id: int = Field(foreign_key="club.id")
+    season_id: int = Field(foreign_key="season.id")
 
     # Relationships
-    member: Member = Relationship(back_populates="memberships")
     club: Club = Relationship(back_populates="memberships")
-
+    member: Member = Relationship(back_populates="memberships")
+    season: Season = Relationship(back_populates="memberships")
+    
 # -----------------------------------------------------------------------------
 # 📋 MATCH TEMPLATE
 # -----------------------------------------------------------------------------
@@ -197,11 +226,11 @@ class MatchTemplateBase(SQLModel):
     duration_minutes: int = Field(default=120)
     location: str
     min_participants: int = Field(default=10)
-    max_participants: int = Field(default=22)
+    max_participants: int = Field(default=50)
     
     # Automation Settings
     polling_start_hours_before: int = Field(default=144)
-    soft_deadline_hours_before: int = Field(default=48)
+    soft_deadline_hours_before: int = Field(default=None)
     hard_deadline_hours_before: int = Field(default=24)
 
 class MatchTemplate(MatchTemplateBase, TimestampMixin, table=True):
@@ -234,9 +263,11 @@ class MatchBase(SQLModel):
 class Match(MatchBase, TimestampMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     club_id: int = Field(foreign_key="club.id")
-    
+    season_id: int = Field(foreign_key="season.id")
+
     # Relationships
     club: Optional["Club"] = Relationship(back_populates="matches")
+    season: Season = Relationship(back_populates="matches")
     participations: List["Participation"] = Relationship(back_populates="match")
     notifications: List["Notification"] = Relationship(back_populates="match")
 
