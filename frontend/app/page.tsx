@@ -10,8 +10,8 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-white">
       <div className="text-center space-y-4 mb-10">
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900">신사에이스 FC 매치 관리 시스템</h1>
-        <p className="text-gray-500">Football Club Management System</p>
+        <h1 className="text-4xl font-bold tracking-tight text-gray-900">신사에이스 FC 경기 출첵 관리 시스템</h1>
+        <p className="text-gray-500">Football Club Attendance Management System</p>
       </div>
 
       <button
