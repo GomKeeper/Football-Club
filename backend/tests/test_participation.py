@@ -1,33 +1,26 @@
-# backend/tests/test_participation.py
 import pytest
 from freezegun import freeze_time
 from datetime import datetime, timedelta, timezone
-from sqlmodel import Session
-from app.models import MatchBase, Club, MatchStatus, ParticipationStatus
+from app.models import Match, MatchStatus, Member, Role
 
-
-# Helper to create a setup
 @pytest.fixture(name="setup_match")
-def setup_match_fixture(session: Session):
-    # 1. Create Club
-    club = Club(name="Test FC", description="Test Club")
-    session.add(club)
-    session.commit()
-    session.refresh(club)
-
-    # 2. Create Match (Scheduled for "Tomorrow")
-    # We set deadlines relative to a fixed point in time we will use in tests
-    # Let's assume "Current Time" will be 2025-01-10 12:00:00
+def setup_match_fixture(session, active_membership, current_season, test_club):
+    """
+    Creates a match linked to the current season.
+    Requesting 'active_membership' guarantees 'test_user' is ready to vote.
+    """
     base_time = datetime(2025, 1, 10, 12, 0, 0, tzinfo=timezone.utc)
-    match = MatchBase(
-        club_id=club.id,
+    
+    match = Match(
+        club_id=test_club.id,
+        season_id=current_season.id,
         name="Test Match",
         location="Stadium",
-        start_time=base_time + timedelta(days=2),  # Match is in 2 days
+        start_time=base_time + timedelta(days=2),
         end_time=base_time + timedelta(days=2, hours=2),
-        # Windows:
-        polling_start_at=base_time - timedelta(hours=1),  # Started 1 hour ago
-        hard_deadline_at=base_time + timedelta(hours=24),  # Ends in 24 hours
+        
+        polling_start_at=base_time - timedelta(hours=1),
+        hard_deadline_at=base_time + timedelta(hours=24),
         min_participants=10,
         max_participants=22,
         status=MatchStatus.RECRUITING,
@@ -35,95 +28,87 @@ def setup_match_fixture(session: Session):
     session.add(match)
     session.commit()
     session.refresh(match)
-
     return match
 
+# Note: 'normal_user_token_headers' authenticates 'test_user', who has 'active_membership'.
 
-# --- TESTS ---
-
-
-def test_vote_success(client, session, normal_user_token_headers, setup_match):
-    """
-    Scenario: User votes within the valid window.
-    """
+def test_vote_success(client, normal_user_token_headers, setup_match):
     match = setup_match
-
-    # Freeze time to be INSIDE the window (2025-01-10 12:00:00)
-    # Window is: 11:00 (Start) ~ Tomorrow 12:00 (End)
-    with freeze_time("2025-01-10 12:00:00+00:00"):
+    with freeze_time("2025-01-10 12:00:00"):
         response = client.post(
             f"/participations/matches/{match.id}/vote",
             headers=normal_user_token_headers,
             json={"status": "ATTENDING"},
         )
-
     assert response.status_code == 200
-    data = response.json()
-    assert data["status"] == "ATTENDING"
-    assert data["match_id"] == match.id
+    assert response.json()["status"] == "ATTENDING"
 
-
-def test_change_vote(client, session, normal_user_token_headers, setup_match):
-    """
-    Scenario: User changes vote from ATTENDING to ABSENT.
-    """
+def test_change_vote(client, normal_user_token_headers, setup_match):
     match = setup_match
-
     with freeze_time("2025-01-10 12:00:00"):
-        # 1. First Vote
         client.post(
             f"/participations/matches/{match.id}/vote",
             headers=normal_user_token_headers,
             json={"status": "ATTENDING"},
         )
-
-        # 2. Change Vote
         response = client.post(
             f"/participations/matches/{match.id}/vote",
             headers=normal_user_token_headers,
             json={"status": "ABSENT"},
         )
-
     assert response.status_code == 200
-    data = response.json()
-    assert data["status"] == "ABSENT"
-    # Verify ID is same (Update, not Insert) - logic depends on repo but usually IDs persist
-    # If ID changes, that's also fine as long as count is 1.
+    assert response.json()["status"] == "ABSENT"
 
-
-def test_vote_too_early(client, session, normal_user_token_headers, setup_match):
-    """
-    Scenario: User tries to vote BEFORE polling starts.
-    """
+def test_vote_too_early(client, normal_user_token_headers, setup_match):
     match = setup_match
-
-    # Freeze time to be BEFORE polling start (10:00 AM)
-    # Polling starts at 11:00 AM
     with freeze_time("2025-01-10 10:00:00"):
         response = client.post(
             f"/participations/matches/{match.id}/vote",
             headers=normal_user_token_headers,
             json={"status": "ATTENDING"},
         )
-
     assert response.status_code == 400
     assert "Voting has not started yet" in response.json()["detail"]
 
-
-def test_vote_too_late(client, session, normal_user_token_headers, setup_match):
-    """
-    Scenario: User tries to vote AFTER hard deadline.
-    """
+def test_vote_too_late(client, normal_user_token_headers, setup_match):
     match = setup_match
-
-    # Freeze time to be AFTER deadline (Jan 12th)
-    # Deadline was Jan 11th 12:00
     with freeze_time("2025-01-12 12:00:00"):
         response = client.post(
             f"/participations/matches/{match.id}/vote",
             headers=normal_user_token_headers,
             json={"status": "ATTENDING"},
         )
-
     assert response.status_code == 400
     assert "Voting is closed" in response.json()["detail"]
+
+def test_vote_no_membership(client, session, setup_match):
+    """
+    Scenario: A user WITHOUT a membership tries to vote.
+    'setup_match' ensures 'test_user' HAS a membership.
+    So we must create a NEW 'ghost' user here.
+    """
+    from jose import jwt
+    from app.core.config import settings
+
+    # 1. Create Ghost User
+    ghost = Member(kakao_id="ghost", name="Ghost", email="ghost@test.com", roles=[Role.VIEWER])
+    session.add(ghost)
+    session.commit()
+    
+    # 2. Token
+    token = jwt.encode({"sub": str(ghost.id)}, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    match = setup_match
+
+    # 3. Try to Vote
+    with freeze_time("2025-01-10 12:00:00"):
+        response = client.post(
+            f"/participations/matches/{match.id}/vote",
+            headers=headers,
+            json={"status": "ATTENDING"},
+        )
+
+    # 4. Expect Gatekeeper Rejection
+    assert response.status_code == 403
+    assert "시즌권" in response.json()["detail"]

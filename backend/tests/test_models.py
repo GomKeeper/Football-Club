@@ -1,8 +1,8 @@
 from sqlmodel import Session
-from app.models import Member, MemberStatus, Club, Membership, MembershipStatus
+from app.models import Member, MemberStatus, Membership, MembershipType
 
 def test_member_status_enum_values():
-    """Ensure Enum values are strictly Uppercase (Prevent Regression)"""
+    """Ensure Enum values are strictly Uppercase"""
     assert MemberStatus.PENDING.value == "PENDING"
     assert MemberStatus.ACTIVE.value == "ACTIVE"
     assert MemberStatus.REJECTED.value == "REJECTED"
@@ -19,32 +19,29 @@ def test_create_member_default_status(session: Session):
     session.refresh(member)
 
     assert member.id is not None
-    assert member.status == MemberStatus.PENDING # Should fail if default is wrong
+    assert member.status == MemberStatus.PENDING 
     assert member.roles == ["VIEWER"]
 
-def test_create_club_and_membership(session: Session):
-    """Test relationship between Club, Member, and Membership"""
-    # 1. Create Club
-    club = Club(name="FC Test")
-    session.add(club)
-    session.commit()
+def test_create_club_and_membership(session: Session, test_club, test_user, current_season):
+    """Test relationship between Club, Member, Season, and Membership using fixtures"""
+    # 1. Use Fixtures: test_club, test_user, current_season are already created.
 
-    # 2. Create Member
-    member = Member(kakao_id="999", name="Striker")
-    session.add(member)
-    session.commit()
-
-    # 3. Create Membership
+    # 2. Create Membership Manually to verify the link works
     membership = Membership(
-        member_id=member.id,
-        club_id=club.id,
-        year=2025,
-        status=MembershipStatus.ACTIVE
+        member_id=test_user.id,
+        club_id=test_club.id,
+        season_id=current_season.id,
+        type=MembershipType.REGULAR,
+        status="ACTIVE",
+        expires_at=current_season.ended_at
     )
     session.add(membership)
     session.commit()
     session.refresh(membership)
 
-    assert membership.year == 2025
-    assert membership.status == "ACTIVE" 
-    
+    # Assertions
+    assert membership.season_id == current_season.id
+    assert membership.member_id == test_user.id
+    assert membership.type == MembershipType.REGULAR
+    assert membership.status == "ACTIVE"
+    assert membership.expires_at == current_season.ended_at

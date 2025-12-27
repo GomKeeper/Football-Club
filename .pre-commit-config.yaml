@@ -1,0 +1,11 @@
+repos:
+  - repo: local
+    hooks:
+      - id: backend-tests
+        name: Backend Tests
+        entry: bash -c "cd backend && uv run pytest"
+        language: system
+        types: [python]
+        files: ^backend/
+        pass_filenames: false
+        always_run: true
