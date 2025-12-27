@@ -5,47 +5,8 @@ import { useEffect, useState } from 'react';
 import { getUpcomingMatches, Match, Participation, getMyParticipations } from '@/lib/api';
 import MatchCard from '@/components/MatchCard';
 import MatchDetailModal from '@/components/MatchDetailModal';
-import { formatKST } from '@/lib/utils';
+import { formatKST, getMatchDisplayStatus } from '@/lib/utils';
 
-const getMatchDisplayStatus = (match: Match) => {
-  const now = new Date();
-  const rawPoll = match.polling_start_at;
-  const rawHard = match.hard_deadline_at;
-
-  const pollString = rawPoll.endsWith('Z') ? rawPoll : `${rawPoll}Z`;
-  const hardString = rawHard.endsWith('Z') ? rawHard : `${rawHard}Z`;
-
-  const pollingStart = new Date(pollString);
-  const hardDeadline = new Date(hardString);
-
-  // Case A: Too Early (Voting hasn't started)
-  if (now < pollingStart) {
-    return {
-      label: '오픈 예정',
-      color: 'bg-gray-100 text-gray-500 border-gray-200',
-      canVote: false,
-      message: `${formatKST(pollString)} 오픈`,
-    };
-  }
-
-  // Case B: Too Late (Hard Deadline passed)
-  if (now > hardDeadline) {
-    return {
-      label: '마감됨',
-      color: 'bg-red-100 text-red-600 border-red-200',
-      canVote: false,
-      message: '투표가 종료되었습니다.',
-    };
-  }
-
-  // Case C: Open (Recruiting)
-  return {
-    label: '모집중',
-    color: 'bg-blue-100 text-blue-700 border-blue-200',
-    canVote: true,
-    message: null,
-  };
-};
 
 export default function DashboardPage() {
   // 👇 1. DESTUCTURE ONLY WHAT EXISTS (Removed 'user')
