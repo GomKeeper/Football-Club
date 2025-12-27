@@ -93,7 +93,7 @@ export default function ManagerMatchDetail({ isOpen, onClose, match, onUpdate }:
                 className="flex-1 flex items-center justify-center gap-2 bg-yellow-400 text-black py-2 rounded-lg text-sm font-bold hover:bg-yellow-500"
               >
                 <ClipboardDocumentIcon className="w-4 h-4" />
-                명단 복사 (카톡)
+                명단 복사 (참석자만)
               </button>
             </div>
 

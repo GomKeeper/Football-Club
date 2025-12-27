@@ -1,5 +1,5 @@
 from typing import Optional, List
-from datetime import datetime, time, timezone
+from datetime import datetime, time, timezone, UTC
 from sqlmodel import SQLModel, Field, Relationship
 from enum import Enum
 import sqlalchemy as sa
@@ -201,7 +201,7 @@ class MembershipBase(SQLModel):
     status: MembershipStatus = Field(default=MembershipStatus.PENDING)
     type: MembershipType = Field(default=MembershipType.REGULAR)
     
-    joined_at: datetime = Field(default_factory=datetime.utcnow)
+    joined_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     expires_at: Optional[datetime] = Field(default=None)
 
 class Membership(MembershipBase, TimestampMixin, table=True):
@@ -295,8 +295,6 @@ class NotificationBase(SQLModel):
     type: NotificationType
     status: NotificationStatus = Field(default=NotificationStatus.PENDING)
     content: str = Field(sa_column=Column(Text)) # Snapshot of the message
-    
-    created_at: datetime = Field(default_factory=datetime.utcnow)
     sent_at: Optional[datetime] = None 
     
     match_id: int = Field(foreign_key="match.id")

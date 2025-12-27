@@ -4,6 +4,7 @@ from sqlmodel import Session, select
 from app.models import Match, Participation
 from typing import Optional
 from sqlalchemy.orm import selectinload
+from app.models import MatchStatus
 
 
 class MatchRepository:
@@ -28,6 +29,10 @@ class MatchRepository:
                 selectinload(Match.participations).selectinload(Participation.member)
             )
         )
+        return self.session.exec(statement).all()
+
+    def get_active_matches(self) -> List[Match]:
+        statement = select(Match).where(Match.status == MatchStatus.RECRUITING)
         return self.session.exec(statement).all()
 
     def get_by_id(self, match_id: int) -> Optional[Match]:

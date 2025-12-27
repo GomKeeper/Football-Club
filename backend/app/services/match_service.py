@@ -109,6 +109,13 @@ class MatchService:
     def get_upcoming_matches(self, club_id: int) -> List[Match]:
         return self.match_repository.get_upcoming_matches(club_id)
 
+    def get_schedulable_matches(self) -> List[Match]:
+        """
+        Returns all matches that are potentially active for notifications.
+        Excludes Cancelled matches.
+        """
+        return self.match_repository.get_active_matches()
+
     def update_match(self, match_id: int, update_data: MatchUpdate) -> Match:
         match = self.match_repository.get_by_id(match_id)
         if not match:

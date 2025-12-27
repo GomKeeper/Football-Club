@@ -1,9 +1,10 @@
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from app.models import Membership, MembershipType
 from app.services.membership_service import MembershipService
 from app.repositories.membership_repository import MembershipRepository
 from app.repositories.season_repository import SeasonRepository
+from app.core.utils import ensure_utc
 
 def test_membership_expiration_logic(session, test_club, test_user, current_season):
     """
@@ -23,7 +24,7 @@ def test_membership_expiration_logic(session, test_club, test_user, current_seas
     assert mem_reg.expires_at == current_season.ended_at
 
     # 2. GUEST: Should expire in ~7 day (Standard guest logic)
-    guest_expires_expected = datetime.utcnow() + timedelta(days=7)
+    guest_expires_expected = datetime.now(UTC) + timedelta(days=7)
     
     mem_guest = service.create_membership(
         member_id=test_user.id, 
@@ -32,7 +33,7 @@ def test_membership_expiration_logic(session, test_club, test_user, current_seas
         club_id=test_club.id
     )
     
-    diff = abs((mem_guest.expires_at - guest_expires_expected).total_seconds())
+    diff = abs((ensure_utc(mem_guest.expires_at) - guest_expires_expected).total_seconds())
     assert diff < 300  # Should be within 5 minutes
 
 def test_gatekeeper_has_active_membership(session, test_club, test_user, current_season):

@@ -1,9 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from jose import jwt
 from app.core.config import settings
 from app.models import Member, Role, MemberStatus
 from app.repositories.member_repository import MemberRepository
 from app.schemas import KakaoLoginRequest, Token
+from app.core.utils import ensure_utc
 
 class AuthService:
     def __init__(self, member_repository: MemberRepository):
@@ -40,8 +41,8 @@ class AuthService:
     def _create_access_token(self, data: dict, expires_delta: timedelta) -> str:
         """Internal helper to sign JWTs"""
         to_encode = data.copy()
-        expire = datetime.utcnow() + expires_delta
-        to_encode.update({"exp": expire})
+        expire = datetime.now(UTC) + expires_delta
+        to_encode.update({"exp": ensure_utc(expire)})
         
         return jwt.encode(
             to_encode, 

@@ -1,10 +1,11 @@
 [project]
 name = "backend"
-version = "0.4.3"
+version = "0.4.4"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "apscheduler>=3.11.2",
     "cryptography>=46.0.3",
     "fastapi>=0.127.0",
     "httpx>=0.28.1",

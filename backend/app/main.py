@@ -16,6 +16,7 @@ from app.api import (
     auth,
     notifications,
 )
+from app.scheduler import start_scheduler, shutdown_scheduler
 
 
 def get_app_version():
@@ -42,7 +43,13 @@ app_version = get_app_version()
 async def lifespan(app: FastAPI):
     print("🚀 Server starting... Connecting to Database...")
     init_db()  # Creates tables defined in models.py (we will create models next)
+    print("Connecting to Database... Done")
+    start_scheduler()
+    print("Starting scheduler... Done")
     yield
+    print("Shutting down scheduler...")
+    shutdown_scheduler()
+    print("Shutting down scheduler... Done")
     print("🛑 Server shutting down...")
 
 
